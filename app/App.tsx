@@ -4,10 +4,26 @@ import { useState, useEffect, useMemo } from 'react';
 import { Flame, Hash, Target, Award, ChevronLeft } from 'lucide-react';
 import axios from 'axios';
 
+interface User {
+  name: string;
+  img: string;
+  easy: number;
+  medium: number;
+  hard: number;
+  solved: number;
+  streak: number[];
+  currentStreak: number;
+  thisWeek: number;
+  completion: number;
+  weekDays: boolean[];
+}
+
+type PageType = 'leaderboard' | 'dashboard';
+
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('leaderboard');
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [users, setUsers] = useState([]);
+  const [currentPage, setCurrentPage] = useState<PageType>('leaderboard');
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,7 +43,7 @@ export default function App() {
       const calendarData = calendarRes.data;
       const submissionCalendar = calendarData.submissionCalendar ? JSON.parse(calendarData.submissionCalendar) : {};
       
-      const getDateTimestamp = (date) => {
+      const getDateTimestamp = (date: Date): number => {
         const d = new Date(date);
         const utcDate = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
         return Math.floor(utcDate / 1000);
@@ -91,13 +107,13 @@ export default function App() {
         todayTimestamp
       });
 
-      const newUser = {
+      const newUser: User = {
         name: username,
-        img: profileRes.data.avatar || profileRes.data.profile?.userAvatar,
-        easy: solvedRes.data.easySolved,
-        medium: solvedRes.data.mediumSolved,
-        hard: solvedRes.data.hardSolved,
-        solved: solvedRes.data.solvedProblem,
+        img: profileRes.data.avatar || profileRes.data.profile?.userAvatar || '',
+        easy: solvedRes.data.easySolved || 0,
+        medium: solvedRes.data.mediumSolved || 0,
+        hard: solvedRes.data.hardSolved || 0,
+        solved: solvedRes.data.solvedProblem || 0,
         streak: streak,
         currentStreak: currentStreak,
         thisWeek: thisWeekCount,
@@ -113,7 +129,7 @@ export default function App() {
       });
       setLoading(false);
     } catch (error) {
-      console.log("Error fetching user:", error.message);
+      console.log("Error fetching user:", error instanceof Error ? error.message : 'Unknown error');
       setLoading(false);
     }
   };
@@ -126,7 +142,7 @@ export default function App() {
     });
   }, [users]);
 
-  const openDashboard = (user) => {
+  const openDashboard = (user: User) => {
     setSelectedUser(user);
     setCurrentPage('dashboard');
   };
@@ -191,6 +207,10 @@ export default function App() {
         </div>
       </div>
     );
+  }
+
+  if (!selectedUser) {
+    return null;
   }
 
   const user = selectedUser;
