@@ -16,7 +16,7 @@ export default function App() {
     defaultUsers.forEach(username => fetchUser(username));
   }, []);
 
-  const fetchUser = async (username) => {
+  const fetchUser = async (username: string) => {
     try {
       const [solvedRes, profileRes, calendarRes] = await Promise.all([
         axios.get(`https://kinkdin.onrender.com/${username}/solved`),
