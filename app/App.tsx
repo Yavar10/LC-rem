@@ -5,6 +5,7 @@ import { Flame, Hash, Target, Award, ChevronLeft } from 'lucide-react';
 import axios from 'axios';
 
 interface User {
+  sname:string,
   name: string;
   img: string;
   easy: number;
@@ -109,6 +110,7 @@ export default function App() {
 
       const newUser: User = {
         name: username,
+        sname:profileRes.data.name,
         img: profileRes.data.avatar || profileRes.data.profile?.userAvatar || '',
         easy: solvedRes.data.easySolved || 0,
         medium: solvedRes.data.mediumSolved || 0,
@@ -188,7 +190,7 @@ export default function App() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className="font-semibold">{user.name}</p>
+                        <p className="font-semibold">{user.sname}</p>
                         <p className="text-slate-400 text-sm">{user.solved} problems solved</p>
                       </div>
                     </div>
@@ -243,7 +245,7 @@ export default function App() {
               )}
             </div>
             <div>
-              <h2 className="text-xl font-bold">{user.name}</h2>
+              <h2 className="text-xl font-bold">{user.sname}</h2>
               <p className="text-slate-400">{user.solved} problems solved</p>
             </div>
           </div>
