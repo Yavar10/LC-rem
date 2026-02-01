@@ -27,7 +27,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const defaultUsers = ["zuri10", "divyanshi_dhangar2005", "Syed_Ali_Raza786", "IdPoTqX4HA", "Aditi_singh16", "Kratikajaiswal_25"];
+    const defaultUsers = ["divyanshi_dhangar2005", "Syed_Ali_Raza786", "IdPoTqX4HA", "Aditi_singh16", "Kratikajaiswal_25"];
     
     defaultUsers.forEach(username => fetchUser(username));
   }, []);
