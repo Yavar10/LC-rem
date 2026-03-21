@@ -28,10 +28,9 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const defaultUsers = ["divyanshi_dhangar2005", "Syed_Ali_Raza786", "IdPoTqX4HA", "Aditi_singh16", "Kratikajaiswal_25"];
+    const defaultUsers = ["divyanshi_dhangar2005", "Syed_Ali_Raza786", "IdPoTqX4HA", "Aditi_singh16", "Kratikajaiswal_25","leonish_Gudrak", "Niharika_107","Noor_Alam08"];
     
-    defaultUsers.forEach(username => fetchUser(username));
-  }, []);
+    
 
   const fetchUser = async (username: string) => {
     try {
@@ -135,6 +134,9 @@ export default function App() {
       setLoading(false);
     }
   };
+
+defaultUsers.forEach(username => fetchUser(username));
+  }, []);
 
   const sortedUsers = useMemo(() => {
     return [...users].sort((a, b) => {
