@@ -67,8 +67,7 @@ export default function App() {
         axios.get(`https://kinkdin.onrender.com/${username}/calendar`)
       ]);
 
-      // The LeetCode API wrapper returns 200 OK even if the user doesn't exist,
-      // but it includes an "errors" array. We must check for this to validate the user.
+     
       if (profileRes.data.errors || solvedRes.data.errors || calendarRes.data.errors) {
         throw new Error("User does not exist on LeetCode");
       }
@@ -157,7 +156,7 @@ export default function App() {
       setLoading(false);
       return false;
     }
-  };
+  }; 
 
   useEffect(() => {
     const initUsers = async () => {
