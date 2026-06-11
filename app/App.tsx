@@ -59,10 +59,6 @@ export default function App() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const defaultUsers = ["divyanshi_dhangar2005","suryansh_yadav02", "Syed_Ali_Raza786", "IdPoTqX4HA", "Aditi_singh16", "Kratikajaiswal_25","leonish_Gudrak", "Niharika_107","Noor_Alam08"];
-    
-
   const fetchUser = async (username: string) => {
     try {
       const [solvedRes, profileRes, calendarRes] = await Promise.all([
@@ -70,6 +66,12 @@ export default function App() {
         axios.get(`https://kinkdin.onrender.com/${username}`),
         axios.get(`https://kinkdin.onrender.com/${username}/calendar`)
       ]);
+
+      // The LeetCode API wrapper returns 200 OK even if the user doesn't exist,
+      // but it includes an "errors" array. We must check for this to validate the user.
+      if (profileRes.data.errors || solvedRes.data.errors || calendarRes.data.errors) {
+        throw new Error("User does not exist on LeetCode");
+      }
 
       const calendarData = calendarRes.data;
       const submissionCalendar = calendarData.submissionCalendar ? JSON.parse(calendarData.submissionCalendar) : {};
@@ -127,17 +129,6 @@ export default function App() {
       const totalProblems = 3000;
       const completion = Math.round((solvedRes.data.solvedProblem / totalProblems) * 100);
 
-      console.log('Calendar Data:', {
-        username,
-        streak,
-        weekDays,
-        currentStreak,
-        thisWeekCount,
-        submissionCalendar: Object.keys(submissionCalendar).length,
-        last8Days,
-        todayTimestamp
-      });
-
       const newUser: User = {
         name: username,
         sname:profileRes.data.name,
@@ -160,13 +151,37 @@ export default function App() {
         return [...prev, newUser];
       });
       setLoading(false);
+      return true;
     } catch (error) {
       console.log("Error fetching user:", error instanceof Error ? error.message : 'Unknown error');
       setLoading(false);
+      return false;
     }
   };
 
-defaultUsers.forEach(username => fetchUser(username));
+  useEffect(() => {
+    const initUsers = async () => {
+      try {
+        const res = await axios.get('/api/users');
+        const usernames = res.data.usernames || [];
+        
+        if (usernames.length === 0) {
+          // If DB is empty, fallback to the default list and populate DB
+          const defaultUsers = ["divyanshi_dhangar2005","suryansh_yadav02", "Syed_Ali_Raza786", "IdPoTqX4HA", "Aditi_singh16", "Kratikajaiswal_25","leonish_Gudrak", "Niharika_107","Noor_Alam08"];
+          defaultUsers.forEach(username => {
+             axios.post('/api/users', { username }).catch(() => {});
+             fetchUser(username);
+          });
+        } else {
+          usernames.forEach((username: string) => fetchUser(username));
+        }
+      } catch (e) {
+        console.error("Failed to fetch from DB, using fallback:", e);
+        const defaultUsers = ["divyanshi_dhangar2005","suryansh_yadav02", "Syed_Ali_Raza786", "IdPoTqX4HA", "Aditi_singh16", "Kratikajaiswal_25","leonish_Gudrak", "Niharika_107","Noor_Alam08"];
+        defaultUsers.forEach(username => fetchUser(username));
+      }
+    };
+    initUsers();
   }, []);
 
   const sortedUsers = useMemo(() => {
@@ -214,6 +229,45 @@ defaultUsers.forEach(username => fetchUser(username));
               {users.length} people in the ring. Sorted by weighted score — 
               hards hit different.
             </p>
+
+            {/* Add User Form */}
+            <form 
+              className="mt-6 flex gap-2"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.target as HTMLFormElement;
+                const input = form.elements.namedItem('username') as HTMLInputElement;
+                const val = input.value.trim();
+                if (val) {
+                  setLoading(true);
+                  const success = await fetchUser(val);
+                  if (success) {
+                    try {
+                      await axios.post('/api/users', { username: val });
+                      input.value = '';
+                    } catch (err: any) {
+                      alert(err.response?.data?.error || "Failed to add user to database");
+                    }
+                  } else {
+                    alert("Invalid LeetCode username or API error!");
+                  }
+                  setLoading(false);
+                }
+              }}
+            >
+              <input 
+                name="username"
+                type="text" 
+                placeholder="Enter LeetCode username..."
+                className="bg-[#1a1917] border border-[#2a2926] rounded-lg px-4 py-2.5 text-sm text-[#e8e6e3] placeholder-[#6b6963] focus:outline-none focus:border-[#e07a3a] transition-colors w-full max-w-[280px]"
+              />
+              <button 
+                type="submit"
+                className="bg-[#e07a3a] text-[#111110] px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#e07a3a]/90 active:scale-95 transition-all"
+              >
+                Add
+              </button>
+            </form>
           </header>
 
           {/* Loading state */}
