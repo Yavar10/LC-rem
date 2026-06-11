@@ -228,45 +228,6 @@ export default function App() {
               {users.length} people in the ring. Sorted by weighted score — 
               hards hit different.
             </p>
-
-            {/* Add User Form */}
-            <form 
-              className="mt-6 flex gap-2"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const form = e.target as HTMLFormElement;
-                const input = form.elements.namedItem('username') as HTMLInputElement;
-                const val = input.value.trim();
-                if (val) {
-                  setLoading(true);
-                  const success = await fetchUser(val);
-                  if (success) {
-                    try {
-                      await axios.post('/api/users', { username: val });
-                      input.value = '';
-                    } catch (err: any) {
-                      alert(err.response?.data?.error || "Failed to add user to database");
-                    }
-                  } else {
-                    alert("Invalid LeetCode username or API error!");
-                  }
-                  setLoading(false);
-                }
-              }}
-            >
-              <input 
-                name="username"
-                type="text" 
-                placeholder="Enter LeetCode username..."
-                className="bg-[#1a1917] border border-[#2a2926] rounded-lg px-4 py-2.5 text-sm text-[#e8e6e3] placeholder-[#6b6963] focus:outline-none focus:border-[#e07a3a] transition-colors w-full max-w-[280px]"
-              />
-              <button 
-                type="submit"
-                className="bg-[#e07a3a] text-[#111110] px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#e07a3a]/90 active:scale-95 transition-all"
-              >
-                Add
-              </button>
-            </form>
           </header>
 
           {/* Loading state */}

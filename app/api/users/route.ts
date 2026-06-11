@@ -54,3 +54,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to add user' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const username = searchParams.get('username');
+
+    if (!username) {
+      return NextResponse.json({ error: 'Username is required' }, { status: 400 });
+    }
+
+    const client = await clientPromise;
+    const db = client.db('MentorshipIDs');
+
+    const result = await db.collection('ids').deleteOne({ username: username });
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
+  }
+}
