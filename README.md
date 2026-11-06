@@ -5,10 +5,11 @@ A soulful, typography-first web application designed to track, rank, and visuali
 ## 🌟 Features
 
 - **Dynamic Leaderboard**: Ranks users based on a weighted scoring system (Easy × 50, Medium × 100, Hard × 200).
-- **In-Depth Dashboards**: Clicking any user reveals their personal dashboard, showing their recent 8-day activity streak, weekly completion grid, and difficulty breakdown.
-- **Real-Time Additions**: Add new mentees/users directly from the UI. The app validates the username against LeetCode before permanently saving it to the database.
+- **In-Depth Dashboards (`/u/[username]`)**: Clicking any user reveals their dedicated profile page (`/u/[username]`), displaying their all-time consecutive streak, 7-day weekly activity grid, 8-day timeline, and difficulty distribution.
+- **Hardware Device Binding**: Enforces 1 LeetCode account per physical machine without requiring login/passwords, persisting across normal, incognito, and cross-browser sessions via hardware fingerprinting.
+- **Real-Time Additions**: Add and manage mentees directly from `/user` or the admin console (`/admin`). The app validates accounts against LeetCode before permanently saving them to MongoDB.
 - **Persistent Storage**: Fully integrated with MongoDB to ensure the leaderboard is shared globally and persists across sessions.
-- **Soulful Design**: Features a charcoal-brown, warmth-focused color palette (`#1a1917`, `#e07a3a`) that emphasizes clarity, intent, and personality.
+- **Nocturnal Cyber Aesthetic**: Features a pitch-black obsidian void (`#070709`), electric violet (`#8b5cf6`), and neon emerald highlights paired with Space Grotesk and JetBrains Mono.
 
 ## 🛠 Tech Stack
 

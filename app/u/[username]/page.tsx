@@ -85,31 +85,22 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         ? JSON.parse(calendarData.submissionCalendar) 
         : {};
 
-      // Helper to compute UTC midnight timestamp in seconds (matches LeetCode calendar format)
-      const getDateTimestamp = (d: Date): number => {
-        const utcDate = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
-        return Math.floor(utcDate / 1000);
-      };
-
-      const today = new Date();
+      // Normalize to UTC midnight timestamps (LeetCode calendar format is UTC midnight in seconds)
+      const now = new Date();
+      const todayUtcMidnightSec = Math.floor(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 1000
+      );
+      const yesterdayUtcMidnightSec = todayUtcMidnightSec - 86400;
 
       // 1. Compute 8-day streak timeline
-      const last8Days = Array.from({ length: 8 }, (_, i) => {
-        const d = new Date(today);
-        d.setDate(d.getDate() - (7 - i));
-        return getDateTimestamp(d);
-      });
+      const last8Days = Array.from({ length: 8 }, (_, i) => todayUtcMidnightSec - (7 - i) * 86400);
       const streak = last8Days.map(ts => (submissionCalendar[ts] ? 1 : 0));
 
-      // 2. Compute current calendar week (Monday to Sunday)
-      const dayOfWeek = today.getDay();
-      const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-      const weekDays = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date(today);
-        date.setDate(date.getDate() - mondayOffset + i);
-        const timestamp = getDateTimestamp(date);
-        return !!submissionCalendar[timestamp];
-      });
+      // 2. Compute current calendar week (Monday to Sunday in UTC)
+      const utcDayOfWeek = now.getUTCDay();
+      const mondayOffset = utcDayOfWeek === 0 ? 6 : utcDayOfWeek - 1;
+      const mondaySec = todayUtcMidnightSec - (mondayOffset * 86400);
+      const weekDays = Array.from({ length: 7 }, (_, i) => Boolean(submissionCalendar[mondaySec + (i * 86400)]));
       const activeDays = weekDays.filter(Boolean).length;
 
       // 3. Accurate all-time current streak calculation
@@ -117,12 +108,9 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         .map(Number)
         .sort((a, b) => b - a);
 
-      const todayTimestamp = getDateTimestamp(today);
-      const yesterdayTimestamp = getDateTimestamp(new Date(today.getTime() - 86400000));
-
       let currentStreak = 0;
       if (sortedTimestamps.length > 0) {
-        let checkDate = sortedTimestamps[0] >= todayTimestamp ? todayTimestamp : yesterdayTimestamp;
+        let checkDate = sortedTimestamps[0] >= todayUtcMidnightSec ? todayUtcMidnightSec : yesterdayUtcMidnightSec;
 
         for (const ts of sortedTimestamps) {
           if (ts <= checkDate) {

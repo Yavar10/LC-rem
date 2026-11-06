@@ -1,24 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { ArrowUpRight, ExternalLink } from 'lucide-react';
-import axios from 'axios';
 import Link from 'next/link';
-
-interface User {
-  sname: string;
-  name: string;
-  img: string;
-  easy: number;
-  medium: number;
-  hard: number;
-  solved: number;
-  streak: number[];
-  currentStreak: number;
-  thisWeek: number;
-  completion: number;
-  weekDays: boolean[];
-}
+import { useLeaderboard } from './context/LeaderboardContext';
 
 // ─────────────────────────────────────
 // Helpers
@@ -44,145 +29,15 @@ function getRankLabel(index: number): string {
 // ─────────────────────────────────────
 
 export default function App() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { users, sortedUsers, loading } = useLeaderboard();
 
-  const fetchUser = async (username: string) => {
-    try {
-      const [solvedRes, profileRes, calendarRes] = await Promise.all([
-        axios.get(`https://kinkdin.onrender.com/${username}/solved`),
-        axios.get(`https://kinkdin.onrender.com/${username}`),
-        axios.get(`https://kinkdin.onrender.com/${username}/calendar`)
-      ]);
-
-      if (profileRes.data.errors || solvedRes.data.errors || calendarRes.data.errors) {
-        throw new Error("User does not exist on LeetCode");
-      }
-
-      const calendarData = calendarRes.data;
-      const submissionCalendar = calendarData.submissionCalendar ? JSON.parse(calendarData.submissionCalendar) : {};
-      
-      const getDateTimestamp = (date: Date): number => {
-        const d = new Date(date);
-        const utcDate = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
-        return Math.floor(utcDate / 1000);
-      };
-      
-      const today = new Date();
-      
-      const last8Days = Array.from({ length: 8 }, (_, i) => {
-        const date = new Date(today);
-        date.setDate(date.getDate() - (7 - i));
-        return getDateTimestamp(date);
-      });
-      
-      const streak = last8Days.map(timestamp => {
-        return submissionCalendar[timestamp] ? 1 : 0;
-      });
-
-      const dayOfWeek = today.getDay();
-      const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-      const weekDays = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date(today);
-        date.setDate(date.getDate() - mondayOffset + i);
-        const timestamp = getDateTimestamp(date);
-        return submissionCalendar[timestamp] ? true : false;
-      });
-
-      let currentStreak = 0;
-      const sortedTimestamps = Object.keys(submissionCalendar)
-        .map(Number)
-        .sort((a, b) => b - a);
-      
-      const todayTimestamp = getDateTimestamp(today);
-      const yesterdayTimestamp = getDateTimestamp(new Date(today.getTime() - 86400000));
-      
-      let checkDate = sortedTimestamps[0] >= todayTimestamp ? todayTimestamp : yesterdayTimestamp;
-      
-      for (const ts of sortedTimestamps) {
-        if (ts <= checkDate) {
-          if (ts === checkDate) {
-            currentStreak++;
-            checkDate -= 86400;
-          } else {
-            const daysDiff = Math.floor((checkDate - ts) / 86400);
-            if (daysDiff > 1) break;
-          }
-        }
-      }
-
-      const thisWeekCount = weekDays.filter(day => day).length;
-      const totalProblems = 3000;
-      const completion = Math.round((solvedRes.data.solvedProblem / totalProblems) * 100);
-
-      const newUser: User = {
-        name: username,
-        sname: profileRes.data.name || username,
-        img: profileRes.data.avatar || profileRes.data.profile?.userAvatar || '',
-        easy: solvedRes.data.easySolved || 0,
-        medium: solvedRes.data.mediumSolved || 0,
-        hard: solvedRes.data.hardSolved || 0,
-        solved: solvedRes.data.solvedProblem || 0,
-        streak: streak,
-        currentStreak: currentStreak,
-        thisWeek: thisWeekCount,
-        completion: completion,
-        weekDays: weekDays
-      };
-
-      setUsers(prev => {
-        if (prev.some(u => u.name.toLowerCase() === username.toLowerCase())) {
-          return prev;
-        }
-        return [...prev, newUser];
-      });
-      setLoading(false);
-      return true;
-    } catch (error) {
-      console.log("Error fetching user:", error instanceof Error ? error.message : 'Unknown error');
-      setLoading(false);
-      return false;
-    }
-  };
-
-  useEffect(() => {
-    const fetchDBUsers = async () => {
-      try {
-        const res = await axios.get('/api/users');
-        const usernames = res.data.usernames || [];
-        
-        if (usernames.length === 0) {
-          const defaultUsers = ['vamp_z', 'Ayush_0129', 'the_d_coder', 'loogied'];
-          defaultUsers.forEach(username => {
-            axios.post('/api/users', { username }).catch(() => {});
-            fetchUser(username);
-          });
-        } else {
-          usernames.forEach((username: string) => fetchUser(username));
-        }
-      } catch (e) {
-        console.error("Failed to fetch from DB, using fallback:", e);
-        const defaultUsers = ['vamp_z', 'Ayush_0129', 'the_d_coder', 'loogied'];
-        defaultUsers.forEach(username => fetchUser(username));
-      }
-    };
-
-    fetchDBUsers();
-  }, []);
-
-  const sortedUsers = useMemo(() => {
-    return [...users].sort((a, b) => {
-      const locksB = (b.easy * 50) + (b.medium * 100) + (b.hard * 200);
-      const locksA = (a.easy * 50) + (a.medium * 100) + (a.hard * 200);
-      return locksB - locksA;
+  const todayStr = useMemo(() => {
+    return new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
     });
-  }, [users]);
-
-  const todayStr = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'short',
-    day: 'numeric',
-  });
+  }, []);
 
   return (
     <div className="min-h-screen px-4 py-8 md:px-6 md:py-12">
@@ -193,13 +48,22 @@ export default function App() {
             <p className="text-[#6b6963] text-xs font-mono tracking-wide">
               {todayStr} · {getTimeOfDayGreeting()}
             </p>
-            <Link 
-              href="/user" 
-              className="text-xs font-mono text-[#e07a3a] hover:text-[#e07a3a]/80 bg-[#e07a3a]/10 hover:bg-[#e07a3a]/15 px-2.5 py-1 rounded-md border border-[#e07a3a]/20 transition-all flex items-center gap-1.5"
-            >
-              <span>My LeetCode ID</span>
-              <ArrowUpRight className="w-3 h-3" />
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link 
+                href="/weekly-leaders" 
+                className="text-xs font-mono text-[#FF7417] hover:text-[#FF7417]/80 bg-[#FF7417]/10 hover:bg-[#FF7417]/15 px-2.5 py-1 rounded-md border border-[#FF7417]/25 transition-all flex items-center gap-1.5"
+              >
+                <span>Weekly Leaders</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </Link>
+              <Link 
+                href="/user" 
+                className="text-xs font-mono text-[#e07a3a] hover:text-[#e07a3a]/80 bg-[#e07a3a]/10 hover:bg-[#e07a3a]/15 px-2.5 py-1 rounded-md border border-[#e07a3a]/20 transition-all flex items-center gap-1.5"
+              >
+                <span>My ID</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </Link>
+            </div>
           </div>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight">
             Who&apos;s putting in<br />
@@ -227,7 +91,7 @@ export default function App() {
         <div className="space-y-1">
           {sortedUsers.map((user, index) => {
             const isTop3 = index < 3;
-            const score = (user.easy * 50) + (user.medium * 100) + (user.hard * 200);
+            const score = user.score;
 
             return (
               <Link

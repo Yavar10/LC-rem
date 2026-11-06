@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { LeaderboardProvider } from "./context/LeaderboardContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,9 +13,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Streak Tracker — LeetCode Mentorship Leaderboard",
-  description: "Track daily LeetCode progress, streaks, and rankings for your mentorship group.",
+  title: "LeetRem — LeetCode Mentorship & Weekly Leaders",
+  description: "Track weekly LeetCode rankings, streaks, and problem intensity for the mentorship league.",
 };
 
 export default function RootLayout({
@@ -25,9 +38,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased`}
       >
-        {children}
+        <LeaderboardProvider>
+          {children}
+        </LeaderboardProvider>
       </body>
     </html>
   );

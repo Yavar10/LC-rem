@@ -5,36 +5,37 @@
   --color-foreground: #e8e6e3;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-space: var(--font-space-grotesk);
+  --font-jetbrains: var(--font-jetbrains-mono);
 }
 
 :root {
-  --bg: #111110;
-  --fg: #e8e6e3;
-  --muted: #6b6963;
-  --dim: #2a2926;
-  --warm: #e07a3a;
-  --warm-dim: rgba(224, 122, 58, 0.12);
-  --green: #3db86a;
-  --green-dim: rgba(61, 184, 106, 0.12);
-  --red: #e05a5a;
-  --amber: #d4a53a;
+  --bg: #101010;
+  --fg: #F2EEE6;
+  --muted: #88847E;
+  --surface-primary: #191919;
+  --surface-secondary: #222222;
+  --border-subtle: #303030;
+  --accent-orange: #FF7417;
+  --accent-green: #39B96F;
 }
 
 body {
-  background: var(--bg) !important;
-  color: var(--fg);
-  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  background: #101010 !important;
+  color: #F2EEE6;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
 }
 
 ::selection {
-  background: var(--warm);
-  color: #111110;
+  background: #FF7417;
+  color: #101010;
 }
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: var(--dim);
-  border-radius: 99px;
+  background: #303030;
+  border-radius: 0px;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+::-webkit-scrollbar-thumb:hover { background: #88847E; }
