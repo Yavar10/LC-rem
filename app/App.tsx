@@ -389,8 +389,17 @@ export default function App() {
               </div>
             )}
           </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{user.sname}</h1>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{user.sname}</h1>
+              <Link
+                href={`/u/${user.name}`}
+                className="text-xs font-mono text-[#6b6963] hover:text-[#e07a3a] transition-colors bg-[#1a1917] px-2 py-0.5 rounded border border-[#2a2926] flex items-center gap-1"
+                title={`View public profile at /u/${user.name}`}
+              >
+                /u/{user.name} <ArrowUpRight className="w-3 h-3" />
+              </Link>
+            </div>
             <p className="text-[#6b6963] text-sm mt-0.5">
               {user.solved} problems · {Math.round(score / 1000)}k points
             </p>
