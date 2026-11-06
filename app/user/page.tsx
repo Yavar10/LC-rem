@@ -164,7 +164,7 @@ export default function UserRegistrationPortal() {
                     <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-[#e8e6e3]">Hardware Identity Active</span>
                         <span className="inline-flex items-center gap-1 text-[10px] bg-[#3db86a]/10 text-[#3db86a] px-2 py-0.5 rounded-full font-mono">
-                            <ShieldCheck className="w-3 h-3" /> cross-browser
+                            <ShieldCheck className="w-3 h-3" /> persistant credentials
                         </span>
                     </div>
                     <p className="text-[11px] text-[#6b6963] font-mono mt-1 break-all">
