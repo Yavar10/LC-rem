@@ -121,12 +121,6 @@ export default function App() {
               <span>{registeredUsername ? `@${registeredUsername}` : 'MY ID'}</span>
               <ArrowUpRight className="w-3 h-3 text-[#88847E]" />
             </Link>
-            <Link 
-              href="/admin" 
-              className="text-[#555555] hover:text-[#88847E] transition-colors hidden sm:inline"
-            >
-              ADMIN
-            </Link>
           </nav>
         </div>
       </header>
