@@ -11,7 +11,7 @@
 :root {
   --bg-primary: #0B0B0B;
   --bg-secondary: #111111;
-  --bg-elevated: #191919;
+  --bg-elevated: #161616;
   --text-primary: #F1EEE8;
   --text-secondary: #AAA59D;
   --text-muted: #77736D;
@@ -19,8 +19,8 @@
   --accent-orange-soft: #D96016;
   --status-green: #39BB75;
   --status-red: #E45B55;
-  --border-subtle: rgba(255, 255, 255, 0.10);
-  --border-strong: rgba(255, 255, 255, 0.17);
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
 }
 
 /* Strict rule: No italic typography anywhere in the interface */
@@ -34,6 +34,21 @@ body {
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
   letter-spacing: -0.01em;
+  position: relative;
+}
+
+/* Subtle atmospheric film grain overlay across viewport */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 99;
+  opacity: 0.032;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
 ::selection {
@@ -41,36 +56,40 @@ body {
   color: #0B0B0B;
 }
 
-/* Custom liquid glass utility classes */
-.glass-panel {
-  background: rgba(17, 17, 17, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+/* Liquid glass floating utility */
+.floating-glass {
+  background: rgba(18, 18, 18, 0.78);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .glass-nav {
   background: rgba(11, 11, 11, 0.82);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .glass-pill {
-  background: rgba(25, 25, 25, 0.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(22, 22, 22, 0.70);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
 }
 
 /* Ambient glow atmospheric utilities */
 .ambient-orange {
-  background: radial-gradient(circle 600px at 50% 0%, rgba(255, 116, 23, 0.09) 0%, transparent 70%);
+  background: radial-gradient(circle 700px at 50% 0%, rgba(255, 116, 23, 0.10) 0%, transparent 70%);
+}
+
+.ambient-leader {
+  background: radial-gradient(ellipse 600px 180px at 20% 50%, rgba(255, 116, 23, 0.07) 0%, transparent 80%);
 }
 
 .ambient-center {
-  background: radial-gradient(ellipse 800px 400px at 50% 20%, rgba(255, 116, 23, 0.06) 0%, transparent 70%);
+  background: radial-gradient(ellipse 900px 500px at 50% 15%, rgba(255, 116, 23, 0.07) 0%, transparent 75%);
 }
 
 /* Custom minimal scrollbar */
@@ -81,7 +100,7 @@ body {
   background: #0B0B0B; 
 }
 ::-webkit-scrollbar-thumb {
-  background: #222222;
+  background: #1f1f1f; 
   border-radius: 0px;
 }
 ::-webkit-scrollbar-thumb:hover { 

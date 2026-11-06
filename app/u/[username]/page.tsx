@@ -10,7 +10,6 @@ import {
   Loader2, 
   Laptop, 
   ShieldCheck, 
-  Flame, 
   Trophy, 
   Calendar,
   AlertCircle,
@@ -184,7 +183,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   // Handle owner deleting their ID from this device
   const handleDelete = async () => {
     const confirmDelete = window.confirm(
-      `Are you sure you want to unbind @${username} from this physical workstation?\n\nThis will free up your machine so you can link another LeetCode handle.`
+      `Are you sure you want to unbind @${username} from this workstation?\n\nThis will free up your machine to link another LeetCode handle.`
     );
     if (!confirmDelete) return;
 
@@ -225,341 +224,333 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       
       {/* Background ambient lighting */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[480px] pointer-events-none overflow-hidden -z-10">
-        <div className="w-full h-full ambient-orange opacity-60" />
+        <div className="w-full h-full ambient-orange opacity-70" />
       </div>
 
       {/* Shared Masthead Navigation */}
       <Navbar />
 
-      {/* ── Main Container ── */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      {/* ── Main Container: Open Editorial Flow ── */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         
         {/* Navigation Breadcrumb */}
-        <div className="mb-6 flex items-center justify-between font-mono text-xs">
+        <div className="mb-6 flex items-center justify-between text-xs">
           <Link 
             href="/" 
             className="group inline-flex items-center gap-1.5 text-[#AAA59D] hover:text-[#F1EEE8] transition-colors"
           >
             <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            <span>BACK TO STANDINGS</span>
+            <span>Back to Standings</span>
           </Link>
 
           {isOwner && (
-            <span className="text-[10px] uppercase tracking-wider text-[#39BB75] border border-[#39BB75]/40 bg-[#39BB75]/10 px-2.5 py-1 font-bold flex items-center gap-1.5">
+            <span className="text-[11px] text-[#39BB75] bg-[#39BB75]/10 border border-[#39BB75]/30 px-3 py-1 font-mono font-semibold flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-[#39BB75]" />
-              AUTHENTICATED WORKSTATION
+              Authenticated Workstation
             </span>
           )}
         </div>
 
         {deleteError && (
-          <div className="bg-[#111111] border-l-4 border-l-[#E45B55] border border-white/10 p-4 mb-6 flex items-start gap-3 text-xs font-mono">
+          <div className="border-l-2 border-l-[#E45B55] bg-[#141414] p-4 mb-6 flex items-start gap-3 text-xs font-mono">
             <AlertCircle className="w-4 h-4 text-[#E45B55] shrink-0 mt-0.5" />
             <div>
-              <span className="text-[#E45B55] font-bold block uppercase tracking-wide">SYSTEM ERROR</span>
+              <span className="text-[#E45B55] font-bold block uppercase tracking-wide">Error</span>
               <span className="text-[#F1EEE8] mt-0.5 block">{deleteError}</span>
             </div>
           </div>
         )}
 
         {loading ? (
-          <div className="border border-white/10 bg-[#111111] p-16 text-center">
+          <div className="py-24 text-center">
             <Loader2 className="w-6 h-6 animate-spin text-[#FF7417] mx-auto mb-3" />
             <p className="text-xs uppercase font-mono text-[#AAA59D]">
-              SYNCING @{username} DOSSIER FROM LEETCODE...
+              Retrieving @{username} dossier from LeetCode...
             </p>
           </div>
         ) : notFound || !stats ? (
-          <div className="border border-white/10 bg-[#111111] p-12 text-center">
+          <div className="py-20 text-center border-t border-b border-white/[0.08]">
             <AlertCircle className="w-8 h-8 text-[#E45B55] mx-auto mb-3" />
             <h2 
               className="text-2xl font-black uppercase text-[#F1EEE8] mb-1 tracking-tight"
               style={{ fontFamily: 'var(--font-display), sans-serif' }}
             >
-              COMPETITOR NOT FOUND
+              Competitor Not Found
             </h2>
-            <p className="text-xs font-mono text-[#AAA59D] mb-6">
+            <p className="text-xs text-[#AAA59D] mb-6">
               The LeetCode username &ldquo;{username}&rdquo; could not be retrieved from the public API.
             </p>
             <Link
               href="/"
               className="inline-block bg-[#FF7417] text-[#0B0B0B] text-xs font-mono font-bold uppercase px-4 py-2 hover:bg-[#FF7417]/90 transition-colors"
             >
-              RETURN TO ROSTER
+              Return to Standings
             </Link>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-12">
             
-            {/* ── Main Profile Header Card ── */}
-            <motion.div 
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="border border-white/10 bg-[#111111] p-6 sm:p-8 relative"
-            >
-              {/* Subtle top orange highlight */}
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#FF7417] via-[#FF7417]/80 to-transparent" />
-
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+            {/* ── Architectural Competitor Header (No Heavy Box) ── */}
+            <section className="border-b border-white/[0.08] pb-10">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 
-                <div className="flex items-center gap-5 min-w-0">
-                  {/* Square Avatar */}
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 bg-[#191919] border-2 border-[#FF7417] overflow-hidden">
-                    {stats.avatar ? (
-                      <img 
-                        src={stats.avatar} 
-                        alt={stats.name} 
-                        className="w-full h-full object-cover contrast-110 hover:scale-105 transition-transform duration-200"
-                      />
-                    ) : (
-                      <div 
-                        className="w-full h-full flex items-center justify-center font-bold text-2xl text-[#F1EEE8]"
-                        style={{ fontFamily: 'var(--font-display), sans-serif' }}
-                      >
-                        {stats.name.slice(0, 2).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2.5">
-                      <h1 
-                        className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-[#F1EEE8] truncate"
-                        style={{ fontFamily: 'var(--font-display), sans-serif' }}
-                      >
-                        {stats.realName || stats.name}
-                      </h1>
-                      <a 
-                        href={`https://leetcode.com/u/${stats.name}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-[#77736D] hover:text-[#FF7417] transition-colors shrink-0"
-                        title="Open LeetCode Profile"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </div>
-                    
-                    <p className="text-xs font-mono text-[#AAA59D] mt-1">
-                      @{stats.name}
-                    </p>
-
+                <div className="space-y-3 min-w-0">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-mono text-[#FF7417] uppercase tracking-wider bg-[#FF7417]/10 px-2 py-0.5 border border-[#FF7417]/25">
+                      Competitor Dossier
+                    </span>
                     {stats.ranking && (
-                      <div className="text-[11px] font-mono text-[#FF7417] mt-2 flex items-center gap-1.5 font-bold">
-                        <Trophy className="w-3.5 h-3.5 text-[#FF7417]" />
-                        <span>GLOBAL LEETCODE #{stats.ranking.toLocaleString()}</span>
-                      </div>
+                      <span className="text-xs font-mono text-[#AAA59D] flex items-center gap-1">
+                        <Trophy className="w-3 h-3 text-[#FF7417]" />
+                        <span>LeetCode #{stats.ranking.toLocaleString()}</span>
+                      </span>
                     )}
                   </div>
+
+                  {/* Giant Competitor Name */}
+                  <div className="flex items-center gap-3">
+                    <h1 
+                      className="text-5xl sm:text-7xl lg:text-8xl font-black uppercase tracking-tight text-[#F1EEE8] leading-none truncate"
+                      style={{ fontFamily: 'var(--font-display), sans-serif' }}
+                    >
+                      {stats.realName || stats.name}
+                    </h1>
+                    <a 
+                      href={`https://leetcode.com/u/${stats.name}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-[#77736D] hover:text-[#FF7417] transition-colors shrink-0"
+                      title="Open LeetCode Profile"
+                    >
+                      <ExternalLink className="w-5 h-5" />
+                    </a>
+                  </div>
+
+                  <p className="text-sm font-mono text-[#AAA59D]">
+                    @{stats.name}
+                  </p>
                 </div>
 
-                {/* Big Solve Stat */}
-                <div className="sm:text-right border-t sm:border-t-0 border-white/10 pt-4 sm:pt-0 shrink-0 font-mono">
-                  <div 
-                    className="text-4xl sm:text-5xl font-black text-[#FF7417] leading-none tracking-tight"
+                {/* Big Headline Stat: Total Solved */}
+                <div className="md:text-right border-t md:border-t-0 border-white/[0.08] pt-4 md:pt-0 shrink-0">
+                  <span 
+                    className="text-6xl sm:text-7xl font-black text-[#FF7417] leading-none block tracking-tight"
                     style={{ fontFamily: 'var(--font-display), sans-serif' }}
                   >
                     {stats.totalSolved}
-                  </div>
-                  <div className="text-[10px] text-[#77736D] uppercase tracking-widest mt-1">
-                    TOTAL SOLVED PROBLEMS
-                  </div>
-                </div>
-              </div>
-
-              {/* Subline Data Strip */}
-              <div className="mt-6 pt-5 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
-                <div className="flex items-center gap-2">
-                  <Flame className={`w-4 h-4 ${stats.currentStreak > 0 ? 'text-[#FF7417] fill-[#FF7417]' : 'text-[#77736D]'}`} />
-                  <span className="font-bold text-[#F1EEE8]">
-                    {stats.currentStreak} DAY ACTIVE STREAK
+                  </span>
+                  <span className="text-xs text-[#AAA59D] uppercase tracking-wider font-mono mt-1 block">
+                    Problems Solved
                   </span>
                 </div>
-                <span className="text-[#39BB75] font-semibold">
-                  {stats.activeDays}/7 DAYS ACTIVE THIS WEEK
-                </span>
-              </div>
-            </motion.div>
 
-            {/* ── 4-Metric Dossier Strip ── */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono">
-              <div className="bg-[#111111] border border-white/10 p-4">
-                <p 
-                  className="text-3xl sm:text-4xl font-black text-[#F1EEE8] leading-none"
+              </div>
+            </section>
+
+            {/* ── Open Editorial Stat Strip (Varied Scale, No Repetitive Boxes) ── */}
+            <section className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 border-b border-white/[0.08] pb-10">
+              <div>
+                <span 
+                  className="text-4xl sm:text-5xl font-black text-[#F1EEE8] block leading-none"
                   style={{ fontFamily: 'var(--font-display), sans-serif' }}
                 >
                   {stats.currentStreak}
-                </p>
-                <p className="text-[#77736D] text-[10px] uppercase tracking-wider mt-1.5">ACTIVE STREAK</p>
-              </div>
-
-              <div className="bg-[#111111] border border-white/10 p-4">
-                <p 
-                  className="text-3xl sm:text-4xl font-black text-[#39BB75] leading-none"
-                  style={{ fontFamily: 'var(--font-display), sans-serif' }}
-                >
-                  {stats.totalSolved}
-                </p>
-                <p className="text-[#77736D] text-[10px] uppercase tracking-wider mt-1.5">SOLVED PROBLEMS</p>
-              </div>
-
-              <div className="bg-[#111111] border border-white/10 p-4">
-                <p 
-                  className="text-3xl sm:text-4xl font-black text-[#FF7417] leading-none"
-                  style={{ fontFamily: 'var(--font-display), sans-serif' }}
-                >
-                  {stats.activeDays}<span className="text-[#77736D] text-lg font-normal">/7</span>
-                </p>
-                <p className="text-[#77736D] text-[10px] uppercase tracking-wider mt-1.5">DAYS THIS WEEK</p>
-              </div>
-
-              <div className="bg-[#111111] border border-white/10 p-4">
-                <p 
-                  className="text-3xl sm:text-4xl font-black text-[#F1EEE8] leading-none"
-                  style={{ fontFamily: 'var(--font-display), sans-serif' }}
-                >
-                  {stats.completion}<span className="text-[#77736D] text-lg font-normal">%</span>
-                </p>
-                <p className="text-[#77736D] text-[10px] uppercase tracking-wider mt-1.5">CURRICULUM PACE</p>
-              </div>
-            </div>
-
-            {/* ── Problem Difficulty Breakdown ── */}
-            <div className="border border-white/10 bg-[#111111] p-5 sm:p-6 space-y-4">
-              <div className="border-b border-white/10 pb-3 flex items-center justify-between font-mono">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-[#F1EEE8]">
-                  PROBLEM DIFFICULTY SPLIT
-                </h2>
-                <span className="text-[10px] text-[#AAA59D]">
-                  LEETCODE VERIFIED
+                </span>
+                <span className="text-xs text-[#AAA59D] mt-1.5 block">
+                  Active daily streak
                 </span>
               </div>
 
-              {/* Easy */}
               <div>
-                <div className="flex justify-between text-xs font-mono mb-1.5">
-                  <span className="text-[#39BB75] font-bold">EASY PROBLEMS (50 PTS)</span>
-                  <span className="text-[#AAA59D]">{stats.easySolved} <span className="text-[#55524E]">/ {maxEasy}</span></span>
-                </div>
-                <div className="w-full h-2 bg-[#191919] border border-white/5">
-                  <motion.div 
-                    className="h-full bg-[#39BB75]"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min((stats.easySolved / maxEasy) * 100, 100)}%` }}
-                    transition={{ duration: 0.5 }}
-                  />
-                </div>
-              </div>
-
-              {/* Medium */}
-              <div>
-                <div className="flex justify-between text-xs font-mono mb-1.5">
-                  <span className="text-[#FF7417] font-bold">MEDIUM PROBLEMS (100 PTS)</span>
-                  <span className="text-[#AAA59D]">{stats.mediumSolved} <span className="text-[#55524E]">/ {maxMed}</span></span>
-                </div>
-                <div className="w-full h-2 bg-[#191919] border border-white/5">
-                  <motion.div 
-                    className="h-full bg-[#FF7417]"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min((stats.mediumSolved / maxMed) * 100, 100)}%` }}
-                    transition={{ duration: 0.5 }}
-                  />
-                </div>
-              </div>
-
-              {/* Hard */}
-              <div>
-                <div className="flex justify-between text-xs font-mono mb-1.5">
-                  <span className="text-[#E45B55] font-bold">HARD PROBLEMS (200 PTS)</span>
-                  <span className="text-[#AAA59D]">{stats.hardSolved} <span className="text-[#55524E]">/ {maxHard}</span></span>
-                </div>
-                <div className="w-full h-2 bg-[#191919] border border-white/5">
-                  <motion.div 
-                    className="h-full bg-[#E45B55]"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min((stats.hardSolved / maxHard) * 100, 100)}%` }}
-                    transition={{ duration: 0.5 }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* ── This Week 7-Day Activity Matrix ── */}
-            <div className="border border-white/10 bg-[#111111] p-5 sm:p-6">
-              <div className="flex items-baseline justify-between mb-4 border-b border-white/10 pb-3 text-xs font-mono">
-                <h2 className="font-bold uppercase tracking-wider text-[#F1EEE8]">
-                  THIS WEEK&apos;S ATTENDANCE MATRIX (MON — SUN UTC)
-                </h2>
-                <span className="text-[10px] text-[#39BB75] font-semibold">
-                  {stats.activeDays === 7 ? 'PERFECT ATTENDANCE' : `${stats.activeDays}/7 DAYS ACTIVE`}
+                <span 
+                  className="text-4xl sm:text-5xl font-black text-[#39BB75] block leading-none"
+                  style={{ fontFamily: 'var(--font-display), sans-serif' }}
+                >
+                  {stats.activeDays}<span className="text-xl text-[#77736D] font-normal">/7</span>
+                </span>
+                <span className="text-xs text-[#AAA59D] mt-1.5 block">
+                  Active days this week
                 </span>
               </div>
 
-              <div className="grid grid-cols-7 gap-2 text-center">
-                {DAY_LABELS.map((day, i) => {
-                  const isToday = i === currentDayIndex;
-                  const done = stats.weekDays[i];
-
-                  return (
-                    <div key={i} className="flex flex-col items-center">
-                      <div 
-                        className={`
-                          w-full aspect-square flex items-center justify-center text-xs font-mono font-bold border transition-colors
-                          ${done 
-                            ? 'bg-[#39BB75] text-[#0B0B0B] border-[#39BB75]' 
-                            : i <= currentDayIndex
-                            ? 'bg-[#191919] text-[#77736D] border-white/5'
-                            : 'bg-transparent text-[#444444] border-dashed border-white/10'}
-                          ${isToday ? 'ring-2 ring-[#FF7417]' : ''}
-                        `}
-                        title={`${DAY_FULL_NAMES[i]}: ${done ? 'Solved' : 'No activity'}`}
-                      >
-                        {done ? <Check className="w-4 h-4 stroke-[2.5]" /> : '·'}
-                      </div>
-                      <p className={`text-[10px] mt-2 font-mono ${isToday ? 'text-[#FF7417] font-bold' : 'text-[#77736D]'}`}>
-                        {day}
-                      </p>
-                    </div>
-                  );
-                })}
+              <div>
+                <span 
+                  className="text-4xl sm:text-5xl font-black text-[#FF7417] block leading-none"
+                  style={{ fontFamily: 'var(--font-display), sans-serif' }}
+                >
+                  {stats.mediumSolved}
+                </span>
+                <span className="text-xs text-[#AAA59D] mt-1.5 block">
+                  Medium solves
+                </span>
               </div>
-            </div>
 
-            {/* ── Recent 8-Day Activity Timeline ── */}
-            <div className="border border-white/10 bg-[#111111] p-5 sm:p-6">
-              <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3 text-xs font-mono">
-                <h2 className="font-bold uppercase tracking-wider text-[#F1EEE8] flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 text-[#FF7417]" />
-                  <span>RECENT 8-DAY TIMELINE</span>
+              <div>
+                <span 
+                  className="text-4xl sm:text-5xl font-black text-[#E45B55] block leading-none"
+                  style={{ fontFamily: 'var(--font-display), sans-serif' }}
+                >
+                  {stats.hardSolved}
+                </span>
+                <span className="text-xs text-[#AAA59D] mt-1.5 block">
+                  Hard solves
+                </span>
+              </div>
+            </section>
+
+            {/* ── Problem Difficulty Breakdown (Open Layout) ── */}
+            <section className="space-y-6 border-b border-white/[0.08] pb-10">
+              <div className="flex items-baseline justify-between">
+                <h2 
+                  className="text-base font-black uppercase tracking-wider text-[#F1EEE8]"
+                  style={{ fontFamily: 'var(--font-display), sans-serif' }}
+                >
+                  Difficulty Distribution
                 </h2>
-                <span className="text-[10px] text-[#77736D]">ROLLING ACTIVITY WINDOW</span>
+                <span className="text-xs font-mono text-[#AAA59D]">
+                  Easy · Medium · Hard
+                </span>
               </div>
 
-              <div className="grid grid-cols-8 gap-2">
-                {stats.streak.map((active, i) => (
-                  <div 
-                    key={i} 
-                    className={`
-                      h-9 flex items-center justify-center border font-mono text-xs font-bold transition-colors
-                      ${active 
-                        ? 'bg-[#39BB75] text-[#0B0B0B] border-[#39BB75]' 
-                        : 'bg-[#191919] text-[#444444] border-white/5'}
-                      ${i === stats.streak.length - 1 ? 'ring-1 ring-[#FF7417]' : ''}
-                    `}
-                    title={active ? 'Submissions recorded' : 'No submissions'}
-                  >
-                    {active ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : '·'}
+              <div className="space-y-4">
+                {/* Easy */}
+                <div>
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="text-[#39BB75] font-semibold">Easy Problems (50 pts)</span>
+                    <span className="text-[#AAA59D] font-mono">{stats.easySolved} / {maxEasy}</span>
                   </div>
-                ))}
-              </div>
-            </div>
+                  <div className="w-full h-2 bg-white/[0.04]">
+                    <motion.div 
+                      className="h-full bg-[#39BB75]"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min((stats.easySolved / maxEasy) * 100, 100)}%` }}
+                      transition={{ duration: 0.5 }}
+                    />
+                  </div>
+                </div>
 
-            {/* ── Owner Workstation Controls ── */}
+                {/* Medium */}
+                <div>
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="text-[#FF7417] font-semibold">Medium Problems (100 pts)</span>
+                    <span className="text-[#AAA59D] font-mono">{stats.mediumSolved} / {maxMed}</span>
+                  </div>
+                  <div className="w-full h-2 bg-white/[0.04]">
+                    <motion.div 
+                      className="h-full bg-[#FF7417]"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min((stats.mediumSolved / maxMed) * 100, 100)}%` }}
+                      transition={{ duration: 0.5 }}
+                    />
+                  </div>
+                </div>
+
+                {/* Hard */}
+                <div>
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="text-[#E45B55] font-semibold">Hard Problems (200 pts)</span>
+                    <span className="text-[#AAA59D] font-mono">{stats.hardSolved} / {maxHard}</span>
+                  </div>
+                  <div className="w-full h-2 bg-white/[0.04]">
+                    <motion.div 
+                      className="h-full bg-[#E45B55]"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min((stats.hardSolved / maxHard) * 100, 100)}%` }}
+                      transition={{ duration: 0.5 }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Two-Column Attendance & Timeline ── */}
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-8 border-b border-white/[0.08] pb-10">
+              
+              {/* This Week 7-Day Activity Matrix */}
+              <div className="space-y-4">
+                <div className="flex items-baseline justify-between text-xs">
+                  <h3 
+                    className="font-black uppercase tracking-wider text-[#F1EEE8]"
+                    style={{ fontFamily: 'var(--font-display), sans-serif' }}
+                  >
+                    Week Attendance Matrix
+                  </h3>
+                  <span className="text-[#39BB75] font-mono font-semibold">
+                    {stats.activeDays}/7 active days
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-7 gap-1.5 text-center">
+                  {DAY_LABELS.map((day, i) => {
+                    const isToday = i === currentDayIndex;
+                    const done = stats.weekDays[i];
+
+                    return (
+                      <div key={i} className="flex flex-col items-center">
+                        <div 
+                          className={`
+                            w-full aspect-square flex items-center justify-center text-xs font-mono font-bold border transition-colors
+                            ${done 
+                              ? 'bg-[#39BB75] text-[#0B0B0B] border-[#39BB75]' 
+                              : i <= currentDayIndex
+                              ? 'bg-[#161616] text-[#77736D] border-white/5'
+                              : 'bg-transparent text-[#444444] border-dashed border-white/10'}
+                            ${isToday ? 'ring-1 ring-[#FF7417]' : ''}
+                          `}
+                          title={`${DAY_FULL_NAMES[i]}: ${done ? 'Solved' : 'No activity'}`}
+                        >
+                          {done ? <Check className="w-4 h-4 stroke-[2.5]" /> : '·'}
+                        </div>
+                        <p className={`text-[10px] mt-1.5 font-mono ${isToday ? 'text-[#FF7417] font-bold' : 'text-[#77736D]'}`}>
+                          {day}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Recent 8-Day Rolling Timeline */}
+              <div className="space-y-4">
+                <div className="flex items-baseline justify-between text-xs">
+                  <h3 
+                    className="font-black uppercase tracking-wider text-[#F1EEE8] flex items-center gap-1.5"
+                    style={{ fontFamily: 'var(--font-display), sans-serif' }}
+                  >
+                    <Calendar className="w-3.5 h-3.5 text-[#FF7417]" />
+                    <span>8-Day Rolling Timeline</span>
+                  </h3>
+                  <span className="text-[#AAA59D] font-mono text-[11px]">
+                    Recent submissions
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-8 gap-1.5">
+                  {stats.streak.map((active, i) => (
+                    <div 
+                      key={i} 
+                      className={`
+                        h-10 flex items-center justify-center border font-mono text-xs font-bold transition-colors
+                        ${active 
+                          ? 'bg-[#39BB75] text-[#0B0B0B] border-[#39BB75]' 
+                          : 'bg-[#161616] text-[#444444] border-white/5'}
+                        ${i === stats.streak.length - 1 ? 'ring-1 ring-[#FF7417]' : ''}
+                      `}
+                      title={active ? 'Submissions recorded' : 'No submissions'}
+                    >
+                      {active ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : '·'}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </section>
+
+            {/* ── Owner Workstation Controls (Floating Glass) ── */}
             {isOwner && (
-              <div className="border border-white/10 bg-[#111111] p-5 sm:p-6 space-y-4">
+              <section className="floating-glass p-6 space-y-4 border border-white/[0.12]">
                 <div className="flex items-start gap-3.5">
-                  <div className="p-2.5 bg-[#191919] border border-white/10 text-[#FF7417]">
+                  <div className="p-2.5 bg-white/[0.04] text-[#FF7417]">
                     <Laptop className="w-4 h-4" />
                   </div>
                   <div>
@@ -567,36 +558,36 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                       className="text-base font-black uppercase text-[#F1EEE8] tracking-tight"
                       style={{ fontFamily: 'var(--font-display), sans-serif' }}
                     >
-                      WORKSTATION BINDING CONTROLS
+                      Workstation Binding Controls
                     </h3>
-                    <p className="text-xs font-mono text-[#AAA59D] mt-1 leading-relaxed">
-                      This physical hardware is currently bound to <span className="text-[#F1EEE8] font-bold">@{stats.name}</span>. 
-                      To switch accounts or free this machine, unbind below.
+                    <p className="text-xs text-[#AAA59D] mt-1 leading-relaxed">
+                      This machine is currently bound to <span className="text-[#F1EEE8] font-bold">@{stats.name}</span>. 
+                      To switch accounts or unbind this device, confirm removal below.
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-1">
                   <button
                     type="button"
                     onClick={handleDelete}
                     disabled={deleting}
-                    className="w-full bg-[#191919] text-[#E45B55] border border-[#E45B55]/40 hover:bg-[#E45B55]/15 py-3 text-xs font-mono font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer"
+                    className="w-full bg-white/[0.03] text-[#E45B55] border border-[#E45B55]/30 hover:bg-[#E45B55]/10 py-3 text-xs font-mono font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    <span>{deleting ? 'UNLINKING WORKSTATION...' : 'UNLINK LEETCODE ID FROM THIS DEVICE'}</span>
+                    <span>{deleting ? 'Unlinking device...' : 'Unlink LeetCode ID from this workstation'}</span>
                   </button>
                 </div>
-              </div>
+              </section>
             )}
 
             {/* Link back to overall */}
-            <div className="text-center pt-4">
+            <div className="text-center pt-2">
               <Link
                 href="/"
                 className="inline-flex items-center gap-2 text-xs font-mono text-[#AAA59D] hover:text-[#FF7417] transition-colors"
               >
-                <span>VIEW COMPLETE LEAGUE STANDINGS</span>
+                <span>View Complete League Standings</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             </div>

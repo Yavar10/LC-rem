@@ -1,361 +1,1054 @@
+
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback
+} from 'react';
+
 import axios from 'axios';
 import { getDeviceFingerprint } from '@/lib/fingerprint';
+
+const API_BASE = 'https://kinkdin.onrender.com';
+
+const DAY_SECONDS = 86400;
+const ACCEPTED_SUBMISSION_LIMIT = 1000;
+const CACHE_TTL_MS = 3 * 60 * 1000;
+
+// --------------------------------------------------
+// TYPES
+// --------------------------------------------------
 
 export interface LeaderboardUser {
   sname: string;
   name: string;
   img: string;
+
   easy: number;
   medium: number;
   hard: number;
+
   solved: number;
-  score: number; // all-time overall score
-  weeklySolved: number; // problems solved this week (Mon to Sun)
-  weeklyScore: number; // points earned this week
-  rolling7Solved: number; // problems solved in the last 7 rolling days
-  rolling7Score: number; // points earned in the last 7 rolling days
+  score: number;
+
+  weeklySolved: number;
+  weeklyScore: number;
+  weeklySolvedComplete: boolean;
+
+  rolling7Solved: number;
+  rolling7Score: number;
+  rolling7SolvedComplete: boolean;
+
   streak: number[];
   currentStreak: number;
-  thisWeek: number; // active days count this week (0-7)
+
+  thisWeek: number;
   completion: number;
   weekDays: boolean[];
 }
 
+interface AcceptedSubmission {
+  titleSlug?: string;
+  questionSlug?: string;
+  timestamp?: string | number;
+}
+
 interface LeaderboardContextType {
   users: LeaderboardUser[];
-  sortedUsers: LeaderboardUser[]; // alias for overallSortedUsers (backward compatibility)
-  overallSortedUsers: LeaderboardUser[]; // ranked by all-time score
-  weeklySortedUsers: LeaderboardUser[]; // ranked strictly by THIS WEEK's points & problems
+
+  sortedUsers: LeaderboardUser[];
+  overallSortedUsers: LeaderboardUser[];
+  weeklySortedUsers: LeaderboardUser[];
+
   loading: boolean;
   error: string | null;
+
   registeredUsername: string | null;
+
   currentUser: LeaderboardUser | null;
-  currentUserRank: number | null; // overall rank
+  currentUserRank: number | null;
+
   weeklyCurrentUser: LeaderboardUser | null;
-  weeklyCurrentUserRank: number | null; // weekly rank
+  weeklyCurrentUserRank: number | null;
+
   refresh: () => Promise<void>;
 }
 
-const LeaderboardContext = createContext<LeaderboardContextType | undefined>(undefined);
+// --------------------------------------------------
+// HELPERS
+// --------------------------------------------------
 
-// In-memory module cache to guarantee zero duplicate network requests across route navigations
+function parseSubmissionCalendar(
+  raw: unknown
+): Record<string, number> {
+
+  try {
+    const parsed =
+      typeof raw === 'string'
+        ? JSON.parse(raw)
+        : raw;
+
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      !Array.isArray(parsed)
+    ) {
+      return parsed as Record<string, number>;
+    }
+  } catch (error) {
+    console.error('Failed to parse submission calendar:', error);
+  }
+
+  return {};
+}
+
+// Supports common response shapes from LeetCode REST wrappers.
+function extractAcceptedSubmissions(
+  payload: unknown
+): AcceptedSubmission[] | null {
+
+  if (Array.isArray(payload)) {
+    return payload as AcceptedSubmission[];
+  }
+
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  const record = payload as Record<string, unknown>;
+
+  const data =
+    record.data && typeof record.data === 'object'
+      ? record.data as Record<string, unknown>
+      : null;
+
+  const nestedData =
+    data?.data && typeof data.data === 'object'
+      ? data.data as Record<string, unknown>
+      : null;
+
+  const submissionList =
+    data?.submissionList &&
+    typeof data.submissionList === 'object'
+      ? data.submissionList as Record<string, unknown>
+      : null;
+
+  const candidates: unknown[] = [
+    record.submission,
+    record.submissions,
+    record.acceptedSubmission,
+    record.acceptedSubmissions,
+    record.recentAcSubmissionList,
+
+    data?.submission,
+    data?.submissions,
+    data?.acceptedSubmission,
+    data?.acceptedSubmissions,
+    data?.recentAcSubmissionList,
+
+    nestedData?.submission,
+    nestedData?.submissions,
+    nestedData?.recentAcSubmissionList,
+
+    submissionList?.submissions
+  ];
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      return candidate as AcceptedSubmission[];
+    }
+  }
+
+  return null;
+}
+
+function normalizeAcceptedSubmissions(
+  submissions: AcceptedSubmission[]
+) {
+  return submissions
+    .map(sub => {
+      const titleSlug = (
+        sub.titleSlug || sub.questionSlug || ''
+      ).trim().toLowerCase();
+
+      let timestamp = Number(sub.timestamp);
+
+      // Support both seconds and milliseconds.
+      if (timestamp > 10_000_000_000) {
+        timestamp = Math.floor(timestamp / 1000);
+      }
+
+      return {
+        titleSlug,
+        timestamp
+      };
+    })
+    .filter(sub =>
+      sub.titleSlug.length > 0 &&
+      Number.isFinite(sub.timestamp) &&
+      sub.timestamp > 0
+    );
+}
+
+function getWindowSolvedCount(
+  submissions: ReturnType<typeof normalizeAcceptedSubmissions>,
+  rawSubmissionCount: number,
+  responseValid: boolean,
+  windowStart: number,
+  windowEnd: number
+) {
+  const uniqueProblems = new Set<string>();
+
+  submissions.forEach(sub => {
+    if (
+      sub.timestamp >= windowStart &&
+      sub.timestamp < windowEnd
+    ) {
+      uniqueProblems.add(sub.titleSlug);
+    }
+  });
+
+  const timestamps = submissions.map(sub => sub.timestamp);
+
+  const oldestTimestamp =
+    timestamps.length > 0
+      ? Math.min(...timestamps)
+      : null;
+
+  // If the API returned fewer records than requested,
+  // assume the requested result set was not truncated.
+  //
+  // If it reached the limit, we can only confirm completeness
+  // when the oldest returned submission is older than the
+  // start of the requested window.
+
+  const reachedLimit =
+    rawSubmissionCount >= ACCEPTED_SUBMISSION_LIMIT;
+
+  const coverageConfirmed =
+    !reachedLimit ||
+    (
+      oldestTimestamp !== null &&
+      oldestTimestamp <= windowStart
+    );
+
+  return {
+    count: uniqueProblems.size,
+
+    complete:
+      responseValid &&
+      submissions.length === rawSubmissionCount &&
+      coverageConfirmed
+  };
+}
+
+// --------------------------------------------------
+// SHARED CACHE
+// --------------------------------------------------
+
 let memoryCachedUsers: LeaderboardUser[] = [];
-let memoryFetchPromise: Promise<LeaderboardUser[]> | null = null;
+
+let memoryFetchPromise:
+  Promise<LeaderboardUser[]> | null = null;
+
 let memoryLastFetched = 0;
-const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
 
-export function LeaderboardProvider({ children }: { children: React.ReactNode }) {
-  const [users, setUsers] = useState<LeaderboardUser[]>(memoryCachedUsers);
-  const [loading, setLoading] = useState<boolean>(memoryCachedUsers.length === 0);
+// --------------------------------------------------
+// CONTEXT
+// --------------------------------------------------
+
+const LeaderboardContext =
+  createContext<LeaderboardContextType | undefined>(
+    undefined
+  );
+
+// --------------------------------------------------
+// PROVIDER
+// --------------------------------------------------
+
+export function LeaderboardProvider({
+  children
+}: {
+  children: React.ReactNode;
+}) {
+
+  const [users, setUsers] = useState<LeaderboardUser[]>(
+    memoryCachedUsers
+  );
+
+  const [loading, setLoading] = useState(
+    memoryCachedUsers.length === 0
+  );
+
   const [error, setError] = useState<string | null>(null);
-  const [registeredUsername, setRegisteredUsername] = useState<string | null>(null);
 
-  // Fetch individual user stats from LeetCode GraphQL wrapper
-  const fetchSingleUser = async (username: string): Promise<LeaderboardUser | null> => {
+  const [registeredUsername, setRegisteredUsername] =
+    useState<string | null>(null);
+
+  // ------------------------------------------------
+  // FETCH SINGLE USER
+  // ------------------------------------------------
+
+  const fetchSingleUser = async (
+    username: string
+  ): Promise<LeaderboardUser | null> => {
+
     try {
-      const [solvedRes, profileRes, calendarRes] = await Promise.all([
-        axios.get(`https://kinkdin.onrender.com/${username}/solved`),
-        axios.get(`https://kinkdin.onrender.com/${username}`),
-        axios.get(`https://kinkdin.onrender.com/${username}/calendar`).catch(() => ({ data: {} }))
+
+      const [
+        solvedRes,
+        profileRes,
+        calendarRes,
+        acceptedRes
+      ] = await Promise.all([
+
+        // Existing endpoints.
+        axios.get(
+          `${API_BASE}/${encodeURIComponent(username)}/solved`
+        ),
+
+        axios.get(
+          `${API_BASE}/${encodeURIComponent(username)}`
+        ),
+
+        axios.get(
+          `${API_BASE}/${encodeURIComponent(username)}/calendar`
+        ).catch(() => ({ data: {} })),
+
+        // Accepted submissions, needed to count unique problems.
+        //
+        // This is fetched once inside the shared provider,
+        // NOT independently by the weekly leaderboard route.
+        axios.get(
+          `${API_BASE}/${encodeURIComponent(username)}/acSubmission`,
+          {
+            params: {
+              limit: ACCEPTED_SUBMISSION_LIMIT
+            },
+            timeout: 20000
+          }
+        ).catch(() => null)
+
       ]);
 
-      if (profileRes.data?.errors || solvedRes.data?.errors) {
+      if (
+        profileRes.data?.errors ||
+        solvedRes.data?.errors
+      ) {
         return null;
       }
 
+      // ------------------------------------------------
+      // CALENDAR
+      // ------------------------------------------------
+
       const calendarData = calendarRes.data || {};
-      const submissionCalendar = calendarData.submissionCalendar 
-        ? JSON.parse(calendarData.submissionCalendar) 
-        : {};
 
-      // Normalize to UTC midnight timestamps (LeetCode calendar format is UTC midnight in seconds)
-      const now = new Date();
-      const todayUtcMidnightSec = Math.floor(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 1000
+      const submissionCalendar = parseSubmissionCalendar(
+        calendarData.submissionCalendar ??
+        calendarData.data?.submissionCalendar
       );
-      const yesterdayUtcMidnightSec = todayUtcMidnightSec - 86400;
 
-      // Last 8 days timeline for dot visualizations
-      const last8Days = Array.from({ length: 8 }, (_, i) => todayUtcMidnightSec - (7 - i) * 86400);
-      const streak = last8Days.map(timestamp => (submissionCalendar[timestamp] ? 1 : 0));
+      const now = new Date();
 
-      // Current calendar week (Monday 00:00 UTC through Sunday 23:59 UTC)
-      const utcDayOfWeek = now.getUTCDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-      const mondayOffset = utcDayOfWeek === 0 ? 6 : utcDayOfWeek - 1;
-      const mondayUtcMidnightSec = todayUtcMidnightSec - (mondayOffset * 86400);
+      const todayUtcMidnightSec = Math.floor(
+        Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate()
+        ) / 1000
+      );
 
-      const currentWeekTimestamps = Array.from({ length: 7 }, (_, i) => mondayUtcMidnightSec + (i * 86400));
+      const yesterdayUtcMidnightSec =
+        todayUtcMidnightSec - DAY_SECONDS;
 
-      // Active day flags this week (Mon-Sun)
-      const weekDays = currentWeekTimestamps.map(ts => Boolean(submissionCalendar[ts]));
-      const thisWeekCount = weekDays.filter(Boolean).length;
+      // ------------------------------------------------
+      // LAST 8 DAYS ACTIVITY
+      // ------------------------------------------------
 
-      // Problems actually solved THIS week (Monday 00:00 UTC to Sunday 23:59 UTC)
-      let weeklySolved = 0;
-      currentWeekTimestamps.forEach(ts => {
-        if (submissionCalendar[ts]) {
-          weeklySolved += Number(submissionCalendar[ts]);
-        }
-      });
+      const last8Days = Array.from(
+        { length: 8 },
+        (_, i) =>
+          todayUtcMidnightSec - (7 - i) * DAY_SECONDS
+      );
 
-      // Rolling last 7 days problem count
-      const last7DaysTimestamps = Array.from({ length: 7 }, (_, i) => todayUtcMidnightSec - (6 - i) * 86400);
-      let rolling7Solved = 0;
-      last7DaysTimestamps.forEach(ts => {
-        if (submissionCalendar[ts]) {
-          rolling7Solved += Number(submissionCalendar[ts]);
-        }
-      });
+      const streak = last8Days.map(timestamp =>
+        Number(submissionCalendar[timestamp] || 0) > 0
+          ? 1
+          : 0
+      );
 
-      // All-time active streak
+      // ------------------------------------------------
+      // CURRENT WEEK (MONDAY - SUNDAY UTC)
+      // ------------------------------------------------
+
+      const utcDayOfWeek = now.getUTCDay();
+
+      const mondayOffset =
+        utcDayOfWeek === 0
+          ? 6
+          : utcDayOfWeek - 1;
+
+      const mondayUtcMidnightSec =
+        todayUtcMidnightSec -
+        mondayOffset * DAY_SECONDS;
+
+      const nextMondayUtcMidnightSec =
+        mondayUtcMidnightSec + 7 * DAY_SECONDS;
+
+      const currentWeekTimestamps = Array.from(
+        { length: 7 },
+        (_, i) =>
+          mondayUtcMidnightSec + i * DAY_SECONDS
+      );
+
+      // Active days are still calculated from the calendar.
+      // Calendar activity is NOT used for weekly solved count.
+
+      const weekDays = currentWeekTimestamps.map(ts =>
+        Number(submissionCalendar[ts] || 0) > 0
+      );
+
+      const thisWeekCount =
+        weekDays.filter(Boolean).length;
+
+      // ------------------------------------------------
+      // ACCEPTED SUBMISSIONS
+      // ------------------------------------------------
+
+      const rawAcceptedSubmissions =
+        acceptedRes
+          ? extractAcceptedSubmissions(acceptedRes.data)
+          : null;
+
+      const acceptedResponseValid =
+        Array.isArray(rawAcceptedSubmissions);
+
+      const rawSubmissionCount =
+        rawAcceptedSubmissions?.length ?? 0;
+
+      const acceptedSubmissions =
+        normalizeAcceptedSubmissions(
+          rawAcceptedSubmissions || []
+        );
+
+      // ------------------------------------------------
+      // WEEKLY UNIQUE PROBLEMS SOLVED
+      // ------------------------------------------------
+
+      const weeklyResult = getWindowSolvedCount(
+        acceptedSubmissions,
+        rawSubmissionCount,
+        acceptedResponseValid,
+        mondayUtcMidnightSec,
+        nextMondayUtcMidnightSec
+      );
+
+      const weeklySolved = weeklyResult.count;
+
+      // ------------------------------------------------
+      // ROLLING LAST 7 DAYS
+      // ------------------------------------------------
+
+      const rolling7Start =
+        todayUtcMidnightSec - 6 * DAY_SECONDS;
+
+      const rolling7End =
+        todayUtcMidnightSec + DAY_SECONDS;
+
+      const rolling7Result = getWindowSolvedCount(
+        acceptedSubmissions,
+        rawSubmissionCount,
+        acceptedResponseValid,
+        rolling7Start,
+        rolling7End
+      );
+
+      const rolling7Solved = rolling7Result.count;
+
+      // ------------------------------------------------
+      // CURRENT STREAK
+      // ------------------------------------------------
+
+      const activeTimestampSet = new Set(
+        Object.keys(submissionCalendar).map(Number)
+      );
+
       let currentStreak = 0;
-      const sortedTimestamps = Object.keys(submissionCalendar)
-        .map(Number)
-        .sort((a, b) => b - a);
 
-      if (sortedTimestamps.length > 0) {
-        let checkDate = sortedTimestamps[0] >= todayUtcMidnightSec ? todayUtcMidnightSec : yesterdayUtcMidnightSec;
-        for (const ts of sortedTimestamps) {
-          if (ts <= checkDate) {
-            if (ts === checkDate) {
-              currentStreak++;
-              checkDate -= 86400;
-            } else {
-              const daysDiff = Math.floor((checkDate - ts) / 86400);
-              if (daysDiff > 1) break;
-            }
-          }
-        }
+      let checkDate =
+        activeTimestampSet.has(todayUtcMidnightSec)
+          ? todayUtcMidnightSec
+          : yesterdayUtcMidnightSec;
+
+      while (activeTimestampSet.has(checkDate)) {
+        currentStreak++;
+        checkDate -= DAY_SECONDS;
       }
 
-      const easy = solvedRes.data.easySolved || 0;
-      const medium = solvedRes.data.mediumSolved || 0;
-      const hard = solvedRes.data.hardSolved || 0;
-      const solved = solvedRes.data.solvedProblem || 0;
+      // ------------------------------------------------
+      // DIFFICULTY STATISTICS
+      // ------------------------------------------------
 
-      // All-time weighted score formula: E*50 + M*100 + H*200
-      const score = (easy * 50) + (medium * 100) + (hard * 200);
+      const easy =
+        solvedRes.data.easySolved || 0;
 
-      // Average weight per problem for this user based on their difficulty profile
-      const avgWeight = solved > 0 ? score / solved : 100;
+      const medium =
+        solvedRes.data.mediumSolved || 0;
 
-      // Weekly points earned THIS WEEK
-      const weeklyScore = Math.round(weeklySolved * avgWeight);
-      const rolling7Score = Math.round(rolling7Solved * avgWeight);
+      const hard =
+        solvedRes.data.hardSolved || 0;
+
+      const solved =
+        solvedRes.data.solvedProblem || 0;
+
+      // ------------------------------------------------
+      // OVERALL SCORE
+      // ------------------------------------------------
+
+      // Easy = 50
+      // Medium = 100
+      // Hard = 200
+
+      const score =
+        (easy * 50) +
+        (medium * 100) +
+        (hard * 200);
+
+      // ------------------------------------------------
+      // WEEKLY SCORE
+      // ------------------------------------------------
+
+      const avgWeight =
+        solved > 0
+          ? score / solved
+          : 100;
+
+      // Do not award weekly points based on an
+      // incomplete accepted-submission result.
+
+      const weeklyScore =
+        weeklyResult.complete
+          ? Math.round(weeklySolved * avgWeight)
+          : 0;
+
+      const rolling7Score =
+        rolling7Result.complete
+          ? Math.round(rolling7Solved * avgWeight)
+          : 0;
+
+      // ------------------------------------------------
+      // COMPLETION
+      // ------------------------------------------------
 
       const totalProblems = 3000;
-      const completion = Math.round((solved / totalProblems) * 100);
+
+      const completion = Math.round(
+        (solved / totalProblems) * 100
+      );
+
+      // ------------------------------------------------
+      // RETURN USER
+      // ------------------------------------------------
 
       return {
+
         name: username,
-        sname: profileRes.data.name || username,
-        img: profileRes.data.avatar || profileRes.data.profile?.userAvatar || '',
+
+        sname:
+          profileRes.data.name || username,
+
+        img:
+          profileRes.data.avatar ||
+          profileRes.data.profile?.userAvatar ||
+          '',
+
         easy,
         medium,
         hard,
+
         solved,
         score,
+
         weeklySolved,
         weeklyScore,
+        weeklySolvedComplete: weeklyResult.complete,
+
         rolling7Solved,
         rolling7Score,
+        rolling7SolvedComplete: rolling7Result.complete,
+
         streak,
         currentStreak,
+
         thisWeek: thisWeekCount,
+
         completion,
+
         weekDays
+
       };
-    } catch {
+
+    } catch (err) {
+
+      console.error(
+        `Failed to fetch LeetCode user: ${username}`,
+        err
+      );
+
       return null;
     }
   };
 
-  // Master fetch function sharing one single promise
-  const loadLeaderboardData = useCallback(async (force = false): Promise<LeaderboardUser[]> => {
-    const now = Date.now();
-    if (!force && memoryCachedUsers.length > 0 && (now - memoryLastFetched < CACHE_TTL_MS)) {
-      setUsers(memoryCachedUsers);
-      setLoading(false);
-      return memoryCachedUsers;
-    }
+  // ------------------------------------------------
+  // MASTER FETCH FUNCTION
+  // ONE SHARED PROMISE + IN-MEMORY CACHE
+  // ------------------------------------------------
 
-    if (memoryFetchPromise && !force) {
-      return memoryFetchPromise;
-    }
+  const loadLeaderboardData = useCallback(
+    async (
+      force = false
+    ): Promise<LeaderboardUser[]> => {
 
-    memoryFetchPromise = (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await axios.get('/api/users');
-        let usernames: string[] = res.data.usernames || [];
+      const now = Date.now();
 
-        if (usernames.length === 0) {
-          usernames = ['vamp_z', 'Ayush_0129', 'the_d_coder', 'loogied'];
-          usernames.forEach(username => {
-            axios.post('/api/users', { username }).catch(() => {});
-          });
-        }
+      // Use cached data when still valid.
+      if (
+        !force &&
+        memoryCachedUsers.length > 0 &&
+        now - memoryLastFetched < CACHE_TTL_MS
+      ) {
 
-        const userPromises = usernames.map(u => fetchSingleUser(u));
-        const results = await Promise.all(userPromises);
-        const validUsers = results.filter((u): u is LeaderboardUser => u !== null);
-
-        memoryCachedUsers = validUsers;
-        memoryLastFetched = Date.now();
-        setUsers(validUsers);
+        setUsers(memoryCachedUsers);
         setLoading(false);
-        return validUsers;
-      } catch (err: unknown) {
-        console.error('Failed to load leaderboard data:', err);
-        setError('Failed to fetch leaderboard data.');
-        setLoading(false);
+
         return memoryCachedUsers;
-      } finally {
-        memoryFetchPromise = null;
       }
-    })();
 
-    return memoryFetchPromise;
-  }, []);
+      // Avoid duplicate simultaneous fetches.
+      if (memoryFetchPromise && !force) {
+        return memoryFetchPromise;
+      }
 
-  // Check device registration to identify current user
-  useEffect(() => {
-    async function checkCurrentDevice() {
-      try {
-        const { deviceId, hardwareSummary } = await getDeviceFingerprint();
-        const params = new URLSearchParams({
-          deviceId,
-          gpu: hardwareSummary.gpu,
-          screen: hardwareSummary.screen,
-          cores: String(hardwareSummary.cores),
-          os: hardwareSummary.os
-        });
-        const res = await axios.get(`/api/users?${params.toString()}`);
-        if (res.data?.registered && res.data?.user?.username) {
-          setRegisteredUsername(res.data.user.username);
-        } else {
-          setRegisteredUsername(null);
+      memoryFetchPromise = (async () => {
+
+        setLoading(true);
+        setError(null);
+
+        try {
+
+          const res = await axios.get('/api/users');
+
+          let usernames: string[] =
+            res.data.usernames || [];
+
+          if (usernames.length === 0) {
+
+            usernames = [
+              'vamp_z',
+              'Ayush_0129',
+              'the_d_coder',
+              'loogied'
+            ];
+
+            usernames.forEach(username => {
+              axios.post('/api/users', {
+                username
+              }).catch(() => {});
+            });
+          }
+
+          // Each user is fetched once.
+          // All pages consume the same context data.
+
+          const userPromises = usernames.map(username =>
+            fetchSingleUser(username)
+          );
+
+          const results = await Promise.all(userPromises);
+
+          const validUsers = results.filter(
+            (user): user is LeaderboardUser =>
+              user !== null
+          );
+
+          memoryCachedUsers = validUsers;
+
+          memoryLastFetched = Date.now();
+
+          setUsers(validUsers);
+          setLoading(false);
+
+          return validUsers;
+
+        } catch (err: unknown) {
+
+          console.error(
+            'Failed to load leaderboard data:',
+            err
+          );
+
+          setError(
+            'Failed to fetch leaderboard data.'
+          );
+
+          setLoading(false);
+
+          return memoryCachedUsers;
+
+        } finally {
+
+          memoryFetchPromise = null;
+
         }
-      } catch {
-        // Quiet fail
-      }
-    }
-    checkCurrentDevice();
-  }, []);
+
+      })();
+
+      return memoryFetchPromise;
+
+    },
+    []
+  );
+
+  // ------------------------------------------------
+  // DEVICE REGISTRATION
+  // ------------------------------------------------
 
   useEffect(() => {
+
+    async function checkCurrentDevice() {
+
+      try {
+
+        const {
+          deviceId,
+          hardwareSummary
+        } = await getDeviceFingerprint();
+
+        const params = new URLSearchParams({
+
+          deviceId,
+
+          gpu: hardwareSummary.gpu,
+
+          screen: hardwareSummary.screen,
+
+          cores: String(hardwareSummary.cores),
+
+          os: hardwareSummary.os
+
+        });
+
+        const res = await axios.get(
+          `/api/users?${params.toString()}`
+        );
+
+        if (
+          res.data?.registered &&
+          res.data?.user?.username
+        ) {
+
+          setRegisteredUsername(
+            res.data.user.username
+          );
+
+        } else {
+
+          setRegisteredUsername(null);
+
+        }
+
+      } catch {
+
+        // Quiet fail: device registration is optional.
+
+      }
+
+    }
+
+    checkCurrentDevice();
+
+  }, []);
+
+  // ------------------------------------------------
+  // INITIAL DATA LOAD
+  // ------------------------------------------------
+
+  useEffect(() => {
+
     loadLeaderboardData();
+
   }, [loadLeaderboardData]);
 
-  // Overall sorted users (all-time score) - for home page
+  // ------------------------------------------------
+  // OVERALL RANKING
+  // ------------------------------------------------
+
   const overallSortedUsers = useMemo(() => {
-    return [...users].sort((a, b) => b.score - a.score);
+
+    return [...users].sort(
+      (a, b) => b.score - a.score
+    );
+
   }, [users]);
 
-  // Weekly sorted users (THIS WEEK's score and solved problems) - for /weekly-leaders
+  // ------------------------------------------------
+  // WEEKLY RANKING
+  // ------------------------------------------------
+
   const weeklySortedUsers = useMemo(() => {
+
     return [...users].sort((a, b) => {
+
+      // Complete weekly data always ranks ahead
+      // of users whose accepted-submission history
+      // could not be fully verified.
+
+      if (
+        a.weeklySolvedComplete !==
+        b.weeklySolvedComplete
+      ) {
+        return a.weeklySolvedComplete ? -1 : 1;
+      }
+
+      // If both results are incomplete,
+      // avoid claiming an accurate weekly ranking.
+
+      if (
+        !a.weeklySolvedComplete &&
+        !b.weeklySolvedComplete
+      ) {
+        return b.score - a.score;
+      }
+
       // 1. Primary: weekly score
+
       if (b.weeklyScore !== a.weeklyScore) {
         return b.weeklyScore - a.weeklyScore;
       }
-      // 2. Secondary: weekly problems solved
+
+      // 2. Secondary: weekly unique problems solved
+
       if (b.weeklySolved !== a.weeklySolved) {
         return b.weeklySolved - a.weeklySolved;
       }
-      // 3. Tertiary: active days this week
+
+      // 3. Tertiary: active days
+
       if (b.thisWeek !== a.thisWeek) {
         return b.thisWeek - a.thisWeek;
       }
-      // 4. Quaternary: active streak
+
+      // 4. Quaternary: current streak
+
       if (b.currentStreak !== a.currentStreak) {
         return b.currentStreak - a.currentStreak;
       }
+
       // 5. Fallback: all-time score
+
       return b.score - a.score;
+
     });
+
   }, [users]);
 
-  // Current user in overall ranking
-  const { currentUser: overallCurrentUser, currentUserRank: overallCurrentUserRank } = useMemo(() => {
-    if (!registeredUsername || overallSortedUsers.length === 0) {
-      return { currentUser: null, currentUserRank: null };
-    }
-    const index = overallSortedUsers.findIndex(
-      u => u.name.toLowerCase() === registeredUsername.toLowerCase()
-    );
-    if (index === -1) {
-      return { currentUser: null, currentUserRank: null };
-    }
-    return {
-      currentUser: overallSortedUsers[index],
-      currentUserRank: index + 1
-    };
-  }, [registeredUsername, overallSortedUsers]);
+  // ------------------------------------------------
+  // CURRENT USER — OVERALL
+  // ------------------------------------------------
 
-  // Current user in weekly ranking
-  const { weeklyCurrentUser, weeklyCurrentUserRank } = useMemo(() => {
-    if (!registeredUsername || weeklySortedUsers.length === 0) {
-      return { weeklyCurrentUser: null, weeklyCurrentUserRank: null };
+  const {
+    currentUser: overallCurrentUser,
+    currentUserRank: overallCurrentUserRank
+  } = useMemo(() => {
+
+    if (
+      !registeredUsername ||
+      overallSortedUsers.length === 0
+    ) {
+
+      return {
+        currentUser: null,
+        currentUserRank: null
+      };
+
     }
-    const index = weeklySortedUsers.findIndex(
-      u => u.name.toLowerCase() === registeredUsername.toLowerCase()
+
+    const index = overallSortedUsers.findIndex(
+      user =>
+        user.name.toLowerCase() ===
+        registeredUsername.toLowerCase()
     );
+
     if (index === -1) {
-      return { weeklyCurrentUser: null, weeklyCurrentUserRank: null };
+
+      return {
+        currentUser: null,
+        currentUserRank: null
+      };
+
     }
+
     return {
-      weeklyCurrentUser: weeklySortedUsers[index],
-      weeklyCurrentUserRank: index + 1
+
+      currentUser: overallSortedUsers[index],
+
+      currentUserRank: index + 1
+
     };
-  }, [registeredUsername, weeklySortedUsers]);
+
+  }, [
+    registeredUsername,
+    overallSortedUsers
+  ]);
+
+  // ------------------------------------------------
+  // CURRENT USER — WEEKLY
+  // ------------------------------------------------
+
+  const {
+    weeklyCurrentUser,
+    weeklyCurrentUserRank
+  } = useMemo(() => {
+
+    if (
+      !registeredUsername ||
+      weeklySortedUsers.length === 0
+    ) {
+
+      return {
+        weeklyCurrentUser: null,
+        weeklyCurrentUserRank: null
+      };
+
+    }
+
+    const index = weeklySortedUsers.findIndex(
+      user =>
+        user.name.toLowerCase() ===
+        registeredUsername.toLowerCase()
+    );
+
+    if (index === -1) {
+
+      return {
+        weeklyCurrentUser: null,
+        weeklyCurrentUserRank: null
+      };
+
+    }
+
+    return {
+
+      weeklyCurrentUser: weeklySortedUsers[index],
+
+      weeklyCurrentUserRank: index + 1
+
+    };
+
+  }, [
+    registeredUsername,
+    weeklySortedUsers
+  ]);
+
+  // ------------------------------------------------
+  // FORCE REFRESH
+  // ------------------------------------------------
 
   const refresh = useCallback(async () => {
+
     await loadLeaderboardData(true);
+
   }, [loadLeaderboardData]);
 
+  // ------------------------------------------------
+  // CONTEXT VALUE
+  // ------------------------------------------------
+
   const contextValue = useMemo(() => ({
+
     users,
-    sortedUsers: overallSortedUsers, // for backward compatibility with App.tsx
+
+    sortedUsers: overallSortedUsers,
+
     overallSortedUsers,
+
     weeklySortedUsers,
+
     loading,
+
     error,
+
     registeredUsername,
+
     currentUser: overallCurrentUser,
+
     currentUserRank: overallCurrentUserRank,
+
     weeklyCurrentUser,
+
     weeklyCurrentUserRank,
+
     refresh
+
   }), [
+
     users,
+
     overallSortedUsers,
+
     weeklySortedUsers,
+
     loading,
+
     error,
+
     registeredUsername,
+
     overallCurrentUser,
+
     overallCurrentUserRank,
+
     weeklyCurrentUser,
+
     weeklyCurrentUserRank,
+
     refresh
+
   ]);
 
   return (
+
     <LeaderboardContext.Provider value={contextValue}>
+
       {children}
+
     </LeaderboardContext.Provider>
+
   );
+
 }
 
+// --------------------------------------------------
+// HOOK
+// --------------------------------------------------
+
 export function useLeaderboard() {
+
   const context = useContext(LeaderboardContext);
+
   if (!context) {
-    throw new Error('useLeaderboard must be used within a LeaderboardProvider');
+
+    throw new Error(
+      'useLeaderboard must be used within a LeaderboardProvider'
+    );
+
   }
+
   return context;
+
 }

@@ -21,7 +21,6 @@ export default function Navbar() {
         
         {/* Brand Logotype */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <span className="w-2.5 h-2.5 bg-[#FF7417] inline-block shrink-0 transition-transform group-hover:scale-125" />
           <span 
             className="text-2xl font-black tracking-tight text-[#F1EEE8] group-hover:text-[#FF7417] transition-colors leading-none"
             style={{ fontFamily: 'var(--font-display), sans-serif' }}
