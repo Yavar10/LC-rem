@@ -69,17 +69,6 @@ export default function Navbar() {
             <span>{registeredUsername ? `@${registeredUsername}` : 'MY ID'}</span>
             <ArrowUpRight className="w-3 h-3 text-[#77736D]" />
           </Link>
-
-          <Link
-            href="/admin"
-            className={`px-2.5 py-1.5 text-[11px] font-mono tracking-wider uppercase transition-colors hidden md:inline ${
-              isAdmin
-                ? 'text-[#F1EEE8] font-bold'
-                : 'text-[#55524E] hover:text-[#AAA59D]'
-            }`}
-          >
-            ADMIN
-          </Link>
         </nav>
 
       </div>
