@@ -1,20 +1,9 @@
 /**
- * Cross-Browser Hardware Fingerprint Engine
- * 
- * Generates an immutable hardware identifier for the physical device that persists across:
- *  - Normal tabs
- *  - Incognito / InPrivate browsing
- *  - DIFFERENT browsers on the same machine (Chrome, Edge, Firefox, Brave, Opera)
- * 
- * To ensure 100% cross-browser stability, we EXCLUDE browser-engine specific artifacts
- * (such as Canvas 2D font rasterization, Web Audio compressor quirks, and browser vendor strings)
- * and strictly isolate invariant hardware and OS properties:
- * 1. Normalized GPU Chipset (direct from GPU driver via WebGL debug renderer)
- * 2. Primary Screen Resolution & Color Depth (OS display metrics)
- * 3. CPU Logical Cores (navigator.hardwareConcurrency)
- * 4. System Timezone (Intl.DateTimeFormat)
- * 5. Operating System Platform (Windows / macOS / Linux)
- */
+ for this only works cross tabs within a browser ill study 
+ about it and try ti implement something that works across 
+ browsers without going the jwt auth or other routes to make 
+ it seamless and not require an account
+* */
 
 async function sha256(str: string): Promise<string> {
   const buffer = new TextEncoder().encode(str);
