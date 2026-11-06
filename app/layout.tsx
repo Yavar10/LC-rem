@@ -34,9 +34,30 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var c = localStorage.getItem('leetrem_accent');
+                  if (c) {
+                    document.documentElement.style.setProperty('--accent', c);
+                    var clean = c.replace('#', '');
+                    var r = parseInt(clean.substring(0, 2), 16) || 255;
+                    var g = parseInt(clean.substring(2, 4), 16) || 116;
+                    var b = parseInt(clean.substring(4, 6), 16) || 23;
+                    document.documentElement.style.setProperty('--accent-rgb', r + ', ' + g + ', ' + b);
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
-        className={`${anton.variable} ${manrope.variable} ${ibmPlexMono.variable} font-sans antialiased bg-[#0B0B0B] text-[#F1EEE8] min-h-screen selection:bg-[#FF7417] selection:text-[#0B0B0B]`}
+        className={`${anton.variable} ${manrope.variable} ${ibmPlexMono.variable} font-sans antialiased bg-black text-[#F1EEE8] min-h-screen selection:bg-[var(--accent)] selection:text-black`}
       >
         <LeaderboardProvider>
           {children}

@@ -123,7 +123,7 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0B0B] text-[#F1EEE8] selection:bg-[#FF7417] selection:text-[#0B0B0B] font-sans antialiased relative">
+    <div className="min-h-screen bg-black text-[#F1EEE8] selection:bg-[var(--accent)] selection:text-black font-sans antialiased relative">
       
       {/* Background ambient lighting */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[480px] pointer-events-none overflow-hidden -z-10">
@@ -180,13 +180,13 @@ export default function AdminPanel() {
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Enter mentor password..."
                   autoFocus
-                  className="w-full bg-[#0B0B0B] border border-white/[0.12] px-4 py-3 text-sm text-[#F1EEE8] placeholder-[#55524E] focus:outline-none focus:border-[#FF7417] transition-colors font-mono"
+                  className="w-full bg-black border border-white/[0.12] px-4 py-3 text-sm text-[#F1EEE8] placeholder-[#55524E] focus:outline-none focus:border-[#FF7417] transition-colors font-mono"
                 />
               </div>
 
               <button 
                 type="submit" 
-                className="w-full bg-[#FF7417] text-[#0B0B0B] py-3 text-xs font-mono font-bold uppercase tracking-wider hover:bg-[#FF7417]/90 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full bg-[#FF7417] text-black py-3 text-xs font-mono font-bold uppercase tracking-wider hover:bg-[#FF7417]/90 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Authenticate Console</span>
                 <ArrowUpRight className="w-4 h-4" />
@@ -297,7 +297,7 @@ export default function AdminPanel() {
                           onChange={e => setNewUser(e.target.value)}
                           placeholder="e.g. neetcode"
                           disabled={loading}
-                          className="w-full bg-[#0B0B0B] border border-white/[0.12] pl-8 pr-4 py-2.5 text-sm text-[#F1EEE8] placeholder-[#55524E] focus:outline-none focus:border-[#FF7417] transition-colors font-mono disabled:opacity-50"
+                          className="w-full bg-black border border-white/[0.12] pl-8 pr-4 py-2.5 text-sm text-[#F1EEE8] placeholder-[#55524E] focus:outline-none focus:border-[#FF7417] transition-colors font-mono disabled:opacity-50"
                         />
                       </div>
                     </div>
@@ -305,7 +305,7 @@ export default function AdminPanel() {
                     <button 
                       type="submit" 
                       disabled={loading || !newUser.trim()}
-                      className="w-full bg-[#FF7417] text-[#0B0B0B] py-2.5 text-xs font-mono font-bold uppercase tracking-wider hover:bg-[#FF7417]/90 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      className="w-full bg-[#FF7417] text-black py-2.5 text-xs font-mono font-bold uppercase tracking-wider hover:bg-[#FF7417]/90 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                     >
                       {loading ? (
                         <>

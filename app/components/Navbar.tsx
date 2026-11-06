@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ArrowUpRight } from 'lucide-react';
 import { useLeaderboard } from '../context/LeaderboardContext';
+import AccentColorPicker from './AccentColorPicker';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -13,7 +14,6 @@ export default function Navbar() {
   const isOverall = pathname === '/';
   const isWeekly = pathname === '/weekly-leaders';
   const isUser = pathname === '/user' || pathname.startsWith('/u/');
-  const isAdmin = pathname === '/admin';
 
   return (
     <header className="sticky top-0 z-50 glass-nav">
@@ -34,7 +34,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="flex items-center gap-1 sm:gap-2">
+        <nav className="flex items-center gap-1.5 sm:gap-2.5">
           <Link
             href="/"
             className={`px-3 py-1.5 text-xs font-mono tracking-wider uppercase transition-all ${
@@ -69,10 +69,14 @@ export default function Navbar() {
             <span>{registeredUsername ? `@${registeredUsername}` : 'MY ID'}</span>
             <ArrowUpRight className="w-3 h-3 text-[#77736D]" />
           </Link>
+
+          {/* Accent Color Customiser */}
+          <div className="ml-1 pl-2 border-l border-white/10 flex items-center">
+            <AccentColorPicker />
+          </div>
         </nav>
 
       </div>
     </header>
   );
 }
-

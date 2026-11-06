@@ -7,7 +7,7 @@ import Navbar from './components/Navbar';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-[#0B0B0B] text-[#F1EEE8] selection:bg-[#FF7417] selection:text-[#0B0B0B] font-sans antialiased relative">
+    <div className="min-h-screen bg-black text-[#F1EEE8] selection:bg-[var(--accent)] selection:text-black font-sans antialiased relative">
       {/* Background ambient lighting */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[480px] pointer-events-none overflow-hidden -z-10">
         <div className="w-full h-full ambient-orange opacity-60" />
@@ -41,7 +41,7 @@ export default function NotFound() {
         <div className="flex flex-wrap items-center justify-center gap-4 font-mono text-xs">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 bg-[#FF7417] text-[#0B0B0B] font-bold uppercase px-5 py-3 hover:bg-[#FF7417]/90 transition-colors"
+            className="inline-flex items-center gap-2 bg-[#FF7417] text-black font-bold uppercase px-5 py-3 hover:bg-[#FF7417]/90 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
             <span>OVERALL STANDINGS</span>

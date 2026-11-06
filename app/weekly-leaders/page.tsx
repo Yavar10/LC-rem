@@ -133,7 +133,7 @@ export default function WeeklyLeadersPage() {
   }, [weeklySortedUsers]);
 
   return (
-    <div className="min-h-screen bg-[#0B0B0B] text-[#F1EEE8] selection:bg-[#FF7417] selection:text-[#0B0B0B] font-sans antialiased relative">
+    <div className="min-h-screen bg-black text-[#F1EEE8] selection:bg-[var(--accent)] selection:text-black font-sans antialiased relative">
       
       {/* Background ambient lighting */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[520px] pointer-events-none overflow-hidden -z-10">
@@ -234,7 +234,7 @@ export default function WeeklyLeadersPage() {
                 <button
                   onClick={() => setFilterMode('all')}
                   className={`relative px-3 py-1.5 uppercase font-mono tracking-wider transition-colors z-10 cursor-pointer ${
-                    filterMode === 'all' ? 'text-[#0B0B0B] font-bold' : 'text-[#AAA59D] hover:text-[#F1EEE8]'
+                    filterMode === 'all' ? 'text-black font-bold' : 'text-[#AAA59D] hover:text-[#F1EEE8]'
                   }`}
                 >
                   {filterMode === 'all' && (
@@ -250,7 +250,7 @@ export default function WeeklyLeadersPage() {
                 <button
                   onClick={() => setFilterMode('active')}
                   className={`relative px-3 py-1.5 uppercase font-mono tracking-wider transition-colors z-10 cursor-pointer ${
-                    filterMode === 'active' ? 'text-[#0B0B0B] font-bold' : 'text-[#AAA59D] hover:text-[#F1EEE8]'
+                    filterMode === 'active' ? 'text-black font-bold' : 'text-[#AAA59D] hover:text-[#F1EEE8]'
                   }`}
                 >
                   {filterMode === 'active' && (
@@ -381,7 +381,7 @@ export default function WeeklyLeadersPage() {
                                   className={`
                                     w-5 h-5 flex items-center justify-center text-[9px] font-mono font-bold transition-colors
                                     ${active 
-                                      ? 'bg-[#39BB75] text-[#0B0B0B]' 
+                                      ? 'bg-[#39BB75] text-black' 
                                       : dayIdx <= currentDayIndex 
                                       ? 'bg-[#191919] text-[#77736D]' 
                                       : 'bg-transparent text-[#444444] border border-dashed border-white/10'}
@@ -543,7 +543,7 @@ export default function WeeklyLeadersPage() {
                             className={`
                               w-4 h-4 flex items-center justify-center text-[8px] font-mono font-bold transition-colors
                               ${active 
-                                ? 'bg-[#39BB75] text-[#0B0B0B]' 
+                                ? 'bg-[#39BB75] text-black' 
                                 : dayIdx <= currentDayIndex 
                                 ? 'bg-[#191919] text-[#77736D]' 
                                 : 'bg-transparent text-[#333333] border border-dashed border-white/5'}
@@ -591,7 +591,7 @@ export default function WeeklyLeadersPage() {
                 </p>
                 <button
                   onClick={() => { setFilterMode('all'); setSearchQuery(''); }}
-                  className="inline-block bg-[#FF7417] text-[#0B0B0B] text-xs font-mono font-bold uppercase px-4 py-2 hover:bg-[#FF7417]/90 transition-colors cursor-pointer"
+                  className="inline-block bg-[#FF7417] text-black text-xs font-mono font-bold uppercase px-4 py-2 hover:bg-[#FF7417]/90 transition-colors cursor-pointer"
                 >
                   Reset Filter
                 </button>
@@ -730,7 +730,7 @@ export default function WeeklyLeadersPage() {
                 </p>
                 <Link
                   href="/user"
-                  className="block w-full text-center bg-[#FF7417] text-[#0B0B0B] text-xs font-mono font-bold uppercase py-2.5 hover:bg-[#FF7417]/90 transition-colors"
+                  className="block w-full text-center bg-[#FF7417] text-black text-xs font-mono font-bold uppercase py-2.5 hover:bg-[#FF7417]/90 transition-colors"
                 >
                   Link LeetCode Handle →
                 </Link>

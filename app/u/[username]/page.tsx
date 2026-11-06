@@ -220,7 +220,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   const currentDayIndex = new Date().getUTCDay() === 0 ? 6 : new Date().getUTCDay() - 1;
 
   return (
-    <div className="min-h-screen bg-[#0B0B0B] text-[#F1EEE8] selection:bg-[#FF7417] selection:text-[#0B0B0B] font-sans antialiased relative">
+    <div className="min-h-screen bg-black text-[#F1EEE8] selection:bg-[var(--accent)] selection:text-black font-sans antialiased relative">
       
       {/* Background ambient lighting */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[480px] pointer-events-none overflow-hidden -z-10">
@@ -282,7 +282,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
             </p>
             <Link
               href="/"
-              className="inline-block bg-[#FF7417] text-[#0B0B0B] text-xs font-mono font-bold uppercase px-4 py-2 hover:bg-[#FF7417]/90 transition-colors"
+              className="inline-block bg-[#FF7417] text-black text-xs font-mono font-bold uppercase px-4 py-2 hover:bg-[#FF7417]/90 transition-colors"
             >
               Return to Standings
             </Link>
@@ -491,7 +491,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                           className={`
                             w-full aspect-square flex items-center justify-center text-xs font-mono font-bold border transition-colors
                             ${done 
-                              ? 'bg-[#39BB75] text-[#0B0B0B] border-[#39BB75]' 
+                              ? 'bg-[#39BB75] text-black border-[#39BB75]' 
                               : i <= currentDayIndex
                               ? 'bg-[#161616] text-[#77736D] border-white/5'
                               : 'bg-transparent text-[#444444] border-dashed border-white/10'}
@@ -532,7 +532,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                       className={`
                         h-10 flex items-center justify-center border font-mono text-xs font-bold transition-colors
                         ${active 
-                          ? 'bg-[#39BB75] text-[#0B0B0B] border-[#39BB75]' 
+                          ? 'bg-[#39BB75] text-black border-[#39BB75]' 
                           : 'bg-[#161616] text-[#444444] border-white/5'}
                         ${i === stats.streak.length - 1 ? 'ring-1 ring-[#FF7417]' : ''}
                       `}

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #0B0B0B;
+  --color-background: #000000;
   --color-foreground: #F1EEE8;
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
@@ -9,14 +9,14 @@
 }
 
 :root {
-  --bg-primary: #0B0B0B;
-  --bg-secondary: #111111;
-  --bg-elevated: #161616;
+  --bg-primary: #000000;
+  --bg-secondary: #0A0A0A;
+  --bg-elevated: #111111;
   --text-primary: #F1EEE8;
   --text-secondary: #AAA59D;
   --text-muted: #77736D;
-  --accent-orange: #FF7417;
-  --accent-orange-soft: #D96016;
+  --accent: #FF7417;
+  --accent-rgb: 255, 116, 23;
   --status-green: #39BB75;
   --status-red: #E45B55;
   --border-subtle: rgba(255, 255, 255, 0.07);
@@ -29,7 +29,7 @@
 }
 
 body {
-  background: #0B0B0B !important;
+  background: #000000 !important;
   color: #F1EEE8;
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
@@ -52,44 +52,109 @@ body::before {
 }
 
 ::selection {
-  background: #FF7417;
-  color: #0B0B0B;
+  background: var(--accent);
+  color: #000000;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Dynamic Accent Bridges:
+   Applies custom accent strictly to highlights, badges, buttons,
+   and borders. The page canvas & container backgrounds ALWAYS
+   remain pure pitch black (#000000).
+   ───────────────────────────────────────────────────────────── */
+[class*="text-[#FF7417]"]:not([class*="hover:text-"]):not([class*="group-hover:text-"]) {
+  color: var(--accent);
+}
+
+[class*="hover:text-[#FF7417]"]:hover {
+  color: var(--accent) !important;
+}
+
+.group:hover [class*="group-hover:text-[#FF7417]"] {
+  color: var(--accent) !important;
+}
+
+[class*="bg-[#FF7417]"]:not([class*="/"]):not([class*="hover:"]):not([class*="group-hover:"]) {
+  background-color: var(--accent);
+}
+
+[class*="hover:bg-[#FF7417]"]:hover {
+  background-color: var(--accent) !important;
+}
+
+[class*="bg-[#FF7417]/10"] {
+  background-color: rgba(var(--accent-rgb), 0.10);
+}
+
+[class*="bg-[#FF7417]/5"] {
+  background-color: rgba(var(--accent-rgb), 0.05);
+}
+
+[class*="bg-[#FF7417]/90"] {
+  background-color: rgba(var(--accent-rgb), 0.90);
+}
+
+[class*="bg-[#FF7417]/[0.05]"], [class*="bg-[#FF7417]/[0.08]"] {
+  background-color: rgba(var(--accent-rgb), 0.05);
+}
+
+[class*="border-[#FF7417]"]:not([class*="/"]) {
+  border-color: var(--accent);
+}
+
+[class*="border-l-[#FF7417]"] {
+  border-left-color: var(--accent);
+}
+
+[class*="border-b-[#FF7417]"] {
+  border-bottom-color: var(--accent);
+}
+
+[class*="border-[#FF7417]/25"], [class*="border-[#FF7417]/30"] {
+  border-color: rgba(var(--accent-rgb), 0.25);
+}
+
+[class*="border-[#FF7417]/50"], [class*="border-[#FF7417]/60"] {
+  border-color: rgba(var(--accent-rgb), 0.50);
+}
+
+[class*="ring-[#FF7417]"] {
+  --tw-ring-color: var(--accent);
+  outline-color: var(--accent);
+}
+
+[class*="fill-[#FF7417]"] {
+  fill: var(--accent);
 }
 
 /* Liquid glass floating utility */
 .floating-glass {
-  background: rgba(18, 18, 18, 0.78);
+  background: rgba(10, 10, 10, 0.82);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .glass-nav {
-  background: rgba(11, 11, 11, 0.82);
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .glass-pill {
-  background: rgba(22, 22, 22, 0.70);
+  background: rgba(16, 16, 16, 0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.09);
 }
 
-/* Ambient glow atmospheric utilities */
-.ambient-orange {
-  background: radial-gradient(circle 700px at 50% 0%, rgba(255, 116, 23, 0.10) 0%, transparent 70%);
-}
-
-.ambient-leader {
-  background: radial-gradient(ellipse 600px 180px at 20% 50%, rgba(255, 116, 23, 0.07) 0%, transparent 80%);
-}
-
+/* Background atmospheric utilities neutralized: canvas stays solid pitch black */
+.ambient-orange,
+.ambient-leader,
 .ambient-center {
-  background: radial-gradient(ellipse 900px 500px at 50% 15%, rgba(255, 116, 23, 0.07) 0%, transparent 75%);
+  display: none !important;
 }
 
 /* Custom minimal scrollbar */
@@ -97,12 +162,12 @@ body::before {
   width: 5px; 
 }
 ::-webkit-scrollbar-track { 
-  background: #0B0B0B; 
+  background: #000000; 
 }
 ::-webkit-scrollbar-thumb {
-  background: #1f1f1f; 
+  background: #1a1a1a; 
   border-radius: 0px;
 }
 ::-webkit-scrollbar-thumb:hover { 
-  background: #333333; 
+  background: #2e2e2e; 
 }

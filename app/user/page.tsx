@@ -132,7 +132,7 @@ export default function UserRegistrationPortal() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0B0B] text-[#F1EEE8] selection:bg-[#FF7417] selection:text-[#0B0B0B] font-sans antialiased relative">
+    <div className="min-h-screen bg-black text-[#F1EEE8] selection:bg-[var(--accent)] selection:text-black font-sans antialiased relative">
       
       {/* Background ambient lighting */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[480px] pointer-events-none overflow-hidden -z-10">
@@ -305,7 +305,7 @@ export default function UserRegistrationPortal() {
                 <div className="space-y-3 pt-2 text-xs">
                   <Link
                     href={`/u/${registeredUser}`}
-                    className="flex items-center justify-between bg-[#FF7417] text-[#0B0B0B] p-4 font-bold text-xs uppercase hover:bg-[#FF7417]/90 transition-colors group"
+                    className="flex items-center justify-between bg-[#FF7417] text-black p-4 font-bold text-xs uppercase hover:bg-[#FF7417]/90 transition-colors group"
                   >
                     <span>Open Your Profile Dossier (/u/{registeredUser})</span>
                     <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -379,7 +379,7 @@ export default function UserRegistrationPortal() {
                         placeholder="e.g. neetcode"
                         disabled={submitting}
                         autoFocus
-                        className="w-full bg-[#0B0B0B] border border-white/[0.12] pl-8 pr-4 py-3 text-sm text-[#F1EEE8] placeholder-[#55524E] focus:outline-none focus:border-[#FF7417] transition-colors disabled:opacity-50 font-mono"
+                        className="w-full bg-black border border-white/[0.12] pl-8 pr-4 py-3 text-sm text-[#F1EEE8] placeholder-[#55524E] focus:outline-none focus:border-[#FF7417] transition-colors disabled:opacity-50 font-mono"
                       />
                     </div>
                   </div>
@@ -387,7 +387,7 @@ export default function UserRegistrationPortal() {
                   <button
                     type="submit"
                     disabled={submitting || !usernameInput.trim()}
-                    className="w-full bg-[#FF7417] text-[#0B0B0B] py-3.5 text-xs font-mono font-bold uppercase tracking-wider hover:bg-[#FF7417]/90 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                    className="w-full bg-[#FF7417] text-black py-3.5 text-xs font-mono font-bold uppercase tracking-wider hover:bg-[#FF7417]/90 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   >
                     {submitting ? (
                       <>
