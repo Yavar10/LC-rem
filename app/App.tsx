@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ArrowUpRight, ExternalLink } from 'lucide-react';
 import axios from 'axios';
+import Link from 'next/link';
 
 interface User {
   sname:string,
@@ -217,9 +218,18 @@ export default function App() {
 
           {/* Header — not a card, just type */}
           <header className="mb-10 md:mb-14">
-            <p className="text-[#6b6963] text-xs font-mono tracking-wide mb-3">
-              {todayStr} · {getTimeOfDayGreeting()}
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[#6b6963] text-xs font-mono tracking-wide">
+                {todayStr} · {getTimeOfDayGreeting()}
+              </p>
+              <Link 
+                href="/user" 
+                className="text-xs font-mono text-[#e07a3a] hover:text-[#e07a3a]/80 bg-[#e07a3a]/10 hover:bg-[#e07a3a]/15 px-2.5 py-1 rounded-md border border-[#e07a3a]/20 transition-all flex items-center gap-1.5"
+              >
+                <span>My LeetCode ID</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </Link>
+            </div>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight">
               Who&apos;s putting in<br />
               <span className="text-[#e07a3a]">the work</span> this week?
