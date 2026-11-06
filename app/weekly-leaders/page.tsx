@@ -306,7 +306,7 @@ export default function WeeklyLeadersPage() {
                               <img 
                                 src={user.img} 
                                 alt={user.name} 
-                                className="w-full h-full object-cover grayscale contrast-125 group-hover:grayscale-0 transition-all duration-150" 
+                                className="w-full h-full object-cover contrast-125 group-hover:grayscale-0 transition-all duration-150" 
                               />
                             ) : (
                               <div 
