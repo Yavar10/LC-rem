@@ -1,41 +1,89 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #111110;
-  --color-foreground: #e8e6e3;
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-space: var(--font-space-grotesk);
-  --font-jetbrains: var(--font-jetbrains-mono);
+  --color-background: #0B0B0B;
+  --color-foreground: #F1EEE8;
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
 :root {
-  --bg: #101010;
-  --fg: #F2EEE6;
-  --muted: #88847E;
-  --surface-primary: #191919;
-  --surface-secondary: #222222;
-  --border-subtle: #303030;
+  --bg-primary: #0B0B0B;
+  --bg-secondary: #111111;
+  --bg-elevated: #191919;
+  --text-primary: #F1EEE8;
+  --text-secondary: #AAA59D;
+  --text-muted: #77736D;
   --accent-orange: #FF7417;
-  --accent-green: #39B96F;
+  --accent-orange-soft: #D96016;
+  --status-green: #39BB75;
+  --status-red: #E45B55;
+  --border-subtle: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.17);
+}
+
+/* Strict rule: No italic typography anywhere in the interface */
+*, ::before, ::after {
+  font-style: normal !important;
 }
 
 body {
-  background: #101010 !important;
-  color: #F2EEE6;
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  background: #0B0B0B !important;
+  color: #F1EEE8;
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
+  letter-spacing: -0.01em;
 }
 
 ::selection {
   background: #FF7417;
-  color: #101010;
+  color: #0B0B0B;
 }
 
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
+/* Custom liquid glass utility classes */
+.glass-panel {
+  background: rgba(17, 17, 17, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.glass-nav {
+  background: rgba(11, 11, 11, 0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-pill {
+  background: rgba(25, 25, 25, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+/* Ambient glow atmospheric utilities */
+.ambient-orange {
+  background: radial-gradient(circle 600px at 50% 0%, rgba(255, 116, 23, 0.09) 0%, transparent 70%);
+}
+
+.ambient-center {
+  background: radial-gradient(ellipse 800px 400px at 50% 20%, rgba(255, 116, 23, 0.06) 0%, transparent 70%);
+}
+
+/* Custom minimal scrollbar */
+::-webkit-scrollbar { 
+  width: 5px; 
+}
+::-webkit-scrollbar-track { 
+  background: #0B0B0B; 
+}
 ::-webkit-scrollbar-thumb {
-  background: #303030;
+  background: #222222;
   border-radius: 0px;
 }
-::-webkit-scrollbar-thumb:hover { background: #88847E; }
+::-webkit-scrollbar-thumb:hover { 
+  background: #333333; 
+}

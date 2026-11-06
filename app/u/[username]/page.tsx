@@ -13,11 +13,14 @@ import {
   Flame, 
   Trophy, 
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Check
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { getDeviceFingerprint, HardwareProfile } from '@/lib/fingerprint';
+import Navbar from '@/app/components/Navbar';
 
 interface LeetCodeStats {
   name: string;
@@ -37,14 +40,8 @@ interface LeetCodeStats {
   completion: number;
 }
 
-function getMotivation(streak: number): string {
-  if (streak >= 30) return 'machine mode — do not stop.';
-  if (streak >= 14) return 'two weeks strong. keep building.';
-  if (streak >= 7) return 'a full week. momentum is real.';
-  if (streak >= 3) return 'getting into rhythm.';
-  if (streak >= 1) return 'every day counts.';
-  return 'start today. no excuses.';
-}
+const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const DAY_FULL_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export default function UserProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const resolvedParams = use(params);
@@ -86,7 +83,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         ? JSON.parse(calendarData.submissionCalendar) 
         : {};
 
-      // Normalize to UTC midnight timestamps (LeetCode calendar format is UTC midnight in seconds)
+      // Normalize to UTC midnight timestamps
       const now = new Date();
       const todayUtcMidnightSec = Math.floor(
         Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 1000
@@ -104,7 +101,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       const weekDays = Array.from({ length: 7 }, (_, i) => Boolean(submissionCalendar[mondaySec + (i * 86400)]));
       const activeDays = weekDays.filter(Boolean).length;
 
-      // 3. Accurate all-time current streak calculation
+      // 3. Accurate current streak calculation
       const sortedTimestamps = Object.keys(submissionCalendar)
         .map(Number)
         .sort((a, b) => b - a);
@@ -187,7 +184,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   // Handle owner deleting their ID from this device
   const handleDelete = async () => {
     const confirmDelete = window.confirm(
-      `Are you sure you want to delete ${username} from this device?\n\nThis will free up your device so you can register a new LeetCode ID.`
+      `Are you sure you want to unbind @${username} from this physical workstation?\n\nThis will free up your machine so you can link another LeetCode handle.`
     );
     if (!confirmDelete) return;
 
@@ -216,171 +213,120 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     }
   };
 
-  const maxEasy = 800;
-  const maxMed = 1700;
-  const maxHard = 700;
-  const dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  const maxEasy = 850;
+  const maxMed = 1750;
+  const maxHard = 750;
 
   // Current day index in UTC
   const currentDayIndex = new Date().getUTCDay() === 0 ? 6 : new Date().getUTCDay() - 1;
 
   return (
-    <div className="min-h-screen bg-[#101010] text-[#F2EEE6] selection:bg-[#FF7417] selection:text-[#101010] font-sans antialiased">
+    <div className="min-h-screen bg-[#0B0B0B] text-[#F1EEE8] selection:bg-[#FF7417] selection:text-[#0B0B0B] font-sans antialiased relative">
       
-      {/* ── Compact Swiss Header ── */}
-      <header className="border-b border-[#303030] bg-[#101010]/95 sticky top-0 z-40 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-13 flex items-center justify-between">
-          
-          {/* Logo & Profile Identity */}
-          <div className="flex items-center gap-2.5">
-            <Link href="/" className="flex items-center gap-2 group">
-              <span className="w-2.5 h-2.5 bg-[#FF7417] inline-block shrink-0" />
-              <span 
-                className="text-sm font-black tracking-widest uppercase text-[#F2EEE6] group-hover:text-[#FF7417] transition-colors"
-                style={{ fontFamily: 'var(--font-space-grotesk), sans-serif' }}
-              >
-                LEETREM
-              </span>
-            </Link>
-            <span className="text-[#303030] text-xs font-mono">/</span>
-            <span 
-              className="text-[10px] uppercase tracking-widest text-[#88847E]"
-              style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-            >
-              MENTEE PROFILE
-            </span>
-          </div>
+      {/* Background ambient lighting */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[480px] pointer-events-none overflow-hidden -z-10">
+        <div className="w-full h-full ambient-orange opacity-60" />
+      </div>
 
-          {/* Navigation Controls */}
-          <nav 
-            className="flex items-center gap-4 sm:gap-6 text-xs"
-            style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-          >
-            <Link 
-              href="/" 
-              className="text-[#88847E] hover:text-[#F2EEE6] transition-colors"
-            >
-              OVERALL
-            </Link>
-            <Link 
-              href="/weekly-leaders" 
-              className="text-[#88847E] hover:text-[#F2EEE6] transition-colors"
-            >
-              WEEKLY
-            </Link>
-            <Link 
-              href="/user" 
-              className="text-[#88847E] hover:text-[#F2EEE6] transition-colors flex items-center gap-1"
-            >
-              <span>{isOwner ? 'YOUR DEVICE' : 'MY ID'}</span>
-              <ArrowUpRight className="w-3 h-3 text-[#88847E]" />
-            </Link>
-          </nav>
-        </div>
-      </header>
+      {/* Shared Masthead Navigation */}
+      <Navbar />
 
       {/* ── Main Container ── */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         
         {/* Navigation Breadcrumb */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between font-mono text-xs">
           <Link 
             href="/" 
-            className="group inline-flex items-center gap-1.5 text-xs text-[#88847E] hover:text-[#F2EEE6] transition-colors"
-            style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
+            className="group inline-flex items-center gap-1.5 text-[#AAA59D] hover:text-[#F1EEE8] transition-colors"
           >
             <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
             <span>BACK TO STANDINGS</span>
           </Link>
 
           {isOwner && (
-            <span 
-              className="text-[10px] uppercase tracking-wider text-[#39B96F] border border-[#39B96F]/40 bg-[#39B96F]/10 px-2 py-0.5 font-bold flex items-center gap-1"
-              style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-[#39B96F]" />
+            <span className="text-[10px] uppercase tracking-wider text-[#39BB75] border border-[#39BB75]/40 bg-[#39BB75]/10 px-2.5 py-1 font-bold flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#39BB75]" />
               AUTHENTICATED WORKSTATION
             </span>
           )}
         </div>
 
         {deleteError && (
-          <div 
-            className="bg-[#191919] border-l-4 border-l-[#E05A5A] border border-[#303030] p-4 mb-6 flex items-start gap-3 text-xs"
-            style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-          >
-            <AlertCircle className="w-4 h-4 text-[#E05A5A] shrink-0 mt-0.5" />
+          <div className="bg-[#111111] border-l-4 border-l-[#E45B55] border border-white/10 p-4 mb-6 flex items-start gap-3 text-xs font-mono">
+            <AlertCircle className="w-4 h-4 text-[#E45B55] shrink-0 mt-0.5" />
             <div>
-              <span className="text-[#E05A5A] font-bold block uppercase tracking-wide">ERROR</span>
-              <span className="text-[#F2EEE6] mt-0.5 block">{deleteError}</span>
+              <span className="text-[#E45B55] font-bold block uppercase tracking-wide">SYSTEM ERROR</span>
+              <span className="text-[#F1EEE8] mt-0.5 block">{deleteError}</span>
             </div>
           </div>
         )}
 
         {loading ? (
-          <div className="border border-[#303030] bg-[#191919] p-16 text-center">
+          <div className="border border-white/10 bg-[#111111] p-16 text-center">
             <Loader2 className="w-6 h-6 animate-spin text-[#FF7417] mx-auto mb-3" />
-            <p 
-              className="text-xs uppercase text-[#88847E]"
-              style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-            >
-              SYNCING /u/{username} STATS FROM LEETCODE...
+            <p className="text-xs uppercase font-mono text-[#AAA59D]">
+              SYNCING @{username} DOSSIER FROM LEETCODE...
             </p>
           </div>
         ) : notFound || !stats ? (
-          <div className="border border-[#303030] bg-[#191919] p-12 text-center">
-            <AlertCircle className="w-8 h-8 text-[#E05A5A] mx-auto mb-3" />
+          <div className="border border-white/10 bg-[#111111] p-12 text-center">
+            <AlertCircle className="w-8 h-8 text-[#E45B55] mx-auto mb-3" />
             <h2 
-              className="text-lg font-bold uppercase text-[#F2EEE6] mb-1"
-              style={{ fontFamily: 'var(--font-space-grotesk), sans-serif' }}
+              className="text-2xl font-black uppercase text-[#F1EEE8] mb-1 tracking-tight"
+              style={{ fontFamily: 'var(--font-display), sans-serif' }}
             >
-              USER NOT FOUND
+              COMPETITOR NOT FOUND
             </h2>
-            <p 
-              className="text-xs text-[#88847E] mb-6"
-              style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-            >
-              The LeetCode username &ldquo;{username}&rdquo; could not be retrieved from the API.
+            <p className="text-xs font-mono text-[#AAA59D] mb-6">
+              The LeetCode username &ldquo;{username}&rdquo; could not be retrieved from the public API.
             </p>
             <Link
               href="/"
-              className="inline-block bg-[#FF7417] text-[#101010] text-xs font-bold uppercase px-4 py-2 hover:bg-[#FF7417]/90 transition-colors"
-              style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
+              className="inline-block bg-[#FF7417] text-[#0B0B0B] text-xs font-mono font-bold uppercase px-4 py-2 hover:bg-[#FF7417]/90 transition-colors"
             >
-              BACK TO STANDINGS
+              RETURN TO ROSTER
             </Link>
           </div>
         ) : (
           <div className="space-y-6">
             
             {/* ── Main Profile Header Card ── */}
-            <div className="border border-[#303030] bg-[#191919] p-6 sm:p-8">
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-5">
+            <motion.div 
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="border border-white/10 bg-[#111111] p-6 sm:p-8 relative"
+            >
+              {/* Subtle top orange highlight */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#FF7417] via-[#FF7417]/80 to-transparent" />
+
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
                 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-5 min-w-0">
                   {/* Square Avatar */}
-                  <div className="w-16 h-16 shrink-0 bg-[#222222] border border-[#303030] overflow-hidden">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 bg-[#191919] border-2 border-[#FF7417] overflow-hidden">
                     {stats.avatar ? (
                       <img 
                         src={stats.avatar} 
                         alt={stats.name} 
-                        className="w-full h-full object-cover grayscale contrast-125 hover:grayscale-0 transition-all duration-150"
+                        className="w-full h-full object-cover contrast-110 hover:scale-105 transition-transform duration-200"
                       />
                     ) : (
                       <div 
-                        className="w-full h-full flex items-center justify-center font-bold text-2xl text-[#88847E]"
-                        style={{ fontFamily: 'var(--font-space-grotesk), sans-serif' }}
+                        className="w-full h-full flex items-center justify-center font-bold text-2xl text-[#F1EEE8]"
+                        style={{ fontFamily: 'var(--font-display), sans-serif' }}
                       >
                         {stats.name.slice(0, 2).toUpperCase()}
                       </div>
                     )}
                   </div>
 
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2.5">
                       <h1 
-                        className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-[#F2EEE6]"
-                        style={{ fontFamily: 'var(--font-space-grotesk), sans-serif' }}
+                        className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-[#F1EEE8] truncate"
+                        style={{ fontFamily: 'var(--font-display), sans-serif' }}
                       >
                         {stats.realName || stats.name}
                       </h1>
@@ -388,132 +334,170 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                         href={`https://leetcode.com/u/${stats.name}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-[#88847E] hover:text-[#FF7417] transition-colors"
+                        className="text-[#77736D] hover:text-[#FF7417] transition-colors shrink-0"
                         title="Open LeetCode Profile"
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>
                     </div>
                     
-                    <p 
-                      className="text-xs text-[#88847E] mt-0.5"
-                      style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-                    >
+                    <p className="text-xs font-mono text-[#AAA59D] mt-1">
                       @{stats.name}
                     </p>
 
                     {stats.ranking && (
-                      <p 
-                        className="text-[11px] text-[#FF7417] mt-1.5 flex items-center gap-1 font-semibold"
-                        style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-                      >
-                        <Trophy className="w-3 h-3 text-[#FF7417]" /> GLOBAL RANK #{stats.ranking.toLocaleString()}
-                      </p>
+                      <div className="text-[11px] font-mono text-[#FF7417] mt-2 flex items-center gap-1.5 font-bold">
+                        <Trophy className="w-3.5 h-3.5 text-[#FF7417]" />
+                        <span>GLOBAL LEETCODE #{stats.ranking.toLocaleString()}</span>
+                      </div>
                     )}
                   </div>
                 </div>
 
-                <div 
-                  className="sm:text-right border-t sm:border-t-0 border-[#303030] pt-4 sm:pt-0"
-                  style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-                >
+                {/* Big Solve Stat */}
+                <div className="sm:text-right border-t sm:border-t-0 border-white/10 pt-4 sm:pt-0 shrink-0 font-mono">
                   <div 
-                    className="text-3xl sm:text-4xl font-black text-[#FF7417]"
-                    style={{ fontFamily: 'var(--font-space-grotesk), sans-serif' }}
+                    className="text-4xl sm:text-5xl font-black text-[#FF7417] leading-none tracking-tight"
+                    style={{ fontFamily: 'var(--font-display), sans-serif' }}
                   >
                     {stats.totalSolved}
                   </div>
-                  <div className="text-[10px] text-[#88847E] uppercase tracking-widest">
-                    TOTAL SOLVED
+                  <div className="text-[10px] text-[#77736D] uppercase tracking-widest mt-1">
+                    TOTAL SOLVED PROBLEMS
                   </div>
                 </div>
               </div>
 
-              {/* Motivation & Streak Subline */}
-              <div 
-                className="mt-6 pt-5 border-t border-[#303030] flex flex-wrap items-center justify-between gap-2 text-xs"
-                style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-              >
+              {/* Subline Data Strip */}
+              <div className="mt-6 pt-5 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
                 <div className="flex items-center gap-2">
-                  <Flame className={`w-4 h-4 ${stats.currentStreak > 0 ? 'text-[#FF7417]' : 'text-[#88847E]'}`} />
-                  <span className="font-bold text-[#F2EEE6]">
-                    {stats.currentStreak} DAY STREAK
-                  </span>
-                  <span className="text-[#88847E] hidden sm:inline">
-                    — {getMotivation(stats.currentStreak)}
+                  <Flame className={`w-4 h-4 ${stats.currentStreak > 0 ? 'text-[#FF7417] fill-[#FF7417]' : 'text-[#77736D]'}`} />
+                  <span className="font-bold text-[#F1EEE8]">
+                    {stats.currentStreak} DAY ACTIVE STREAK
                   </span>
                 </div>
-                <span className="text-[#39B96F] font-semibold">
+                <span className="text-[#39BB75] font-semibold">
                   {stats.activeDays}/7 DAYS ACTIVE THIS WEEK
                 </span>
               </div>
-            </div>
+            </motion.div>
 
-            {/* ── 4-Stat Swiss Metric Grid ── */}
-            <div 
-              className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center"
-              style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-            >
-              <div className="bg-[#191919] border border-[#303030] p-4">
+            {/* ── 4-Metric Dossier Strip ── */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono">
+              <div className="bg-[#111111] border border-white/10 p-4">
                 <p 
-                  className="text-2xl sm:text-3xl font-black text-[#F2EEE6]"
-                  style={{ fontFamily: 'var(--font-space-grotesk), sans-serif' }}
+                  className="text-3xl sm:text-4xl font-black text-[#F1EEE8] leading-none"
+                  style={{ fontFamily: 'var(--font-display), sans-serif' }}
                 >
                   {stats.currentStreak}
                 </p>
-                <p className="text-[#88847E] text-[10px] uppercase mt-1">ACTIVE STREAK</p>
+                <p className="text-[#77736D] text-[10px] uppercase tracking-wider mt-1.5">ACTIVE STREAK</p>
               </div>
 
-              <div className="bg-[#191919] border border-[#303030] p-4">
+              <div className="bg-[#111111] border border-white/10 p-4">
                 <p 
-                  className="text-2xl sm:text-3xl font-black text-[#39B96F]"
-                  style={{ fontFamily: 'var(--font-space-grotesk), sans-serif' }}
+                  className="text-3xl sm:text-4xl font-black text-[#39BB75] leading-none"
+                  style={{ fontFamily: 'var(--font-display), sans-serif' }}
                 >
                   {stats.totalSolved}
                 </p>
-                <p className="text-[#88847E] text-[10px] uppercase mt-1">SOLVED PROBLEMS</p>
+                <p className="text-[#77736D] text-[10px] uppercase tracking-wider mt-1.5">SOLVED PROBLEMS</p>
               </div>
 
-              <div className="bg-[#191919] border border-[#303030] p-4">
+              <div className="bg-[#111111] border border-white/10 p-4">
                 <p 
-                  className="text-2xl sm:text-3xl font-black text-[#FF7417]"
-                  style={{ fontFamily: 'var(--font-space-grotesk), sans-serif' }}
+                  className="text-3xl sm:text-4xl font-black text-[#FF7417] leading-none"
+                  style={{ fontFamily: 'var(--font-display), sans-serif' }}
                 >
-                  {stats.activeDays}<span className="text-[#88847E] text-base font-normal">/7</span>
+                  {stats.activeDays}<span className="text-[#77736D] text-lg font-normal">/7</span>
                 </p>
-                <p className="text-[#88847E] text-[10px] uppercase mt-1">DAYS THIS WEEK</p>
+                <p className="text-[#77736D] text-[10px] uppercase tracking-wider mt-1.5">DAYS THIS WEEK</p>
               </div>
 
-              <div className="bg-[#191919] border border-[#303030] p-4">
+              <div className="bg-[#111111] border border-white/10 p-4">
                 <p 
-                  className="text-2xl sm:text-3xl font-black text-[#F2EEE6]"
-                  style={{ fontFamily: 'var(--font-space-grotesk), sans-serif' }}
+                  className="text-3xl sm:text-4xl font-black text-[#F1EEE8] leading-none"
+                  style={{ fontFamily: 'var(--font-display), sans-serif' }}
                 >
-                  {stats.completion}<span className="text-[#88847E] text-base font-normal">%</span>
+                  {stats.completion}<span className="text-[#77736D] text-lg font-normal">%</span>
                 </p>
-                <p className="text-[#88847E] text-[10px] uppercase mt-1">COMPLETION RATE</p>
+                <p className="text-[#77736D] text-[10px] uppercase tracking-wider mt-1.5">CURRICULUM PACE</p>
               </div>
             </div>
 
-            {/* ── This Week 7-Day Activity Grid ── */}
-            <div className="border border-[#303030] bg-[#191919] p-5 sm:p-6">
-              <div 
-                className="flex items-baseline justify-between mb-4 border-b border-[#303030] pb-2.5 text-xs"
-                style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-              >
-                <h2 
-                  className="font-bold uppercase tracking-wider text-[#F2EEE6]"
-                  style={{ fontFamily: 'var(--font-space-grotesk), sans-serif' }}
-                >
-                  THIS WEEK&apos;S ACTIVITY (MON — SUN UTC)
+            {/* ── Problem Difficulty Breakdown ── */}
+            <div className="border border-white/10 bg-[#111111] p-5 sm:p-6 space-y-4">
+              <div className="border-b border-white/10 pb-3 flex items-center justify-between font-mono">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-[#F1EEE8]">
+                  PROBLEM DIFFICULTY SPLIT
                 </h2>
-                <span className="text-[10px] text-[#39B96F]">
-                  {stats.activeDays === 7 ? 'PERFECT WEEK' : `${stats.activeDays}/7 DAYS ACTIVE`}
+                <span className="text-[10px] text-[#AAA59D]">
+                  LEETCODE VERIFIED
+                </span>
+              </div>
+
+              {/* Easy */}
+              <div>
+                <div className="flex justify-between text-xs font-mono mb-1.5">
+                  <span className="text-[#39BB75] font-bold">EASY PROBLEMS (50 PTS)</span>
+                  <span className="text-[#AAA59D]">{stats.easySolved} <span className="text-[#55524E]">/ {maxEasy}</span></span>
+                </div>
+                <div className="w-full h-2 bg-[#191919] border border-white/5">
+                  <motion.div 
+                    className="h-full bg-[#39BB75]"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min((stats.easySolved / maxEasy) * 100, 100)}%` }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </div>
+              </div>
+
+              {/* Medium */}
+              <div>
+                <div className="flex justify-between text-xs font-mono mb-1.5">
+                  <span className="text-[#FF7417] font-bold">MEDIUM PROBLEMS (100 PTS)</span>
+                  <span className="text-[#AAA59D]">{stats.mediumSolved} <span className="text-[#55524E]">/ {maxMed}</span></span>
+                </div>
+                <div className="w-full h-2 bg-[#191919] border border-white/5">
+                  <motion.div 
+                    className="h-full bg-[#FF7417]"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min((stats.mediumSolved / maxMed) * 100, 100)}%` }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </div>
+              </div>
+
+              {/* Hard */}
+              <div>
+                <div className="flex justify-between text-xs font-mono mb-1.5">
+                  <span className="text-[#E45B55] font-bold">HARD PROBLEMS (200 PTS)</span>
+                  <span className="text-[#AAA59D]">{stats.hardSolved} <span className="text-[#55524E]">/ {maxHard}</span></span>
+                </div>
+                <div className="w-full h-2 bg-[#191919] border border-white/5">
+                  <motion.div 
+                    className="h-full bg-[#E45B55]"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min((stats.hardSolved / maxHard) * 100, 100)}%` }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ── This Week 7-Day Activity Matrix ── */}
+            <div className="border border-white/10 bg-[#111111] p-5 sm:p-6">
+              <div className="flex items-baseline justify-between mb-4 border-b border-white/10 pb-3 text-xs font-mono">
+                <h2 className="font-bold uppercase tracking-wider text-[#F1EEE8]">
+                  THIS WEEK&apos;S ATTENDANCE MATRIX (MON — SUN UTC)
+                </h2>
+                <span className="text-[10px] text-[#39BB75] font-semibold">
+                  {stats.activeDays === 7 ? 'PERFECT ATTENDANCE' : `${stats.activeDays}/7 DAYS ACTIVE`}
                 </span>
               </div>
 
               <div className="grid grid-cols-7 gap-2 text-center">
-                {dayNames.map((day, i) => {
+                {DAY_LABELS.map((day, i) => {
                   const isToday = i === currentDayIndex;
                   const done = stats.weekDays[i];
 
@@ -521,20 +505,19 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                     <div key={i} className="flex flex-col items-center">
                       <div 
                         className={`
-                          w-full aspect-square flex items-center justify-center text-xs font-bold border transition-colors
+                          w-full aspect-square flex items-center justify-center text-xs font-mono font-bold border transition-colors
                           ${done 
-                            ? 'bg-[#39B96F] text-[#101010] border-[#39B96F]' 
-                            : 'bg-[#101010] text-[#444444] border-[#303030]'}
+                            ? 'bg-[#39BB75] text-[#0B0B0B] border-[#39BB75]' 
+                            : i <= currentDayIndex
+                            ? 'bg-[#191919] text-[#77736D] border-white/5'
+                            : 'bg-transparent text-[#444444] border-dashed border-white/10'}
                           ${isToday ? 'ring-2 ring-[#FF7417]' : ''}
                         `}
-                        style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
+                        title={`${DAY_FULL_NAMES[i]}: ${done ? 'Solved' : 'No activity'}`}
                       >
-                        {done ? '✓' : '·'}
+                        {done ? <Check className="w-4 h-4 stroke-[2.5]" /> : '·'}
                       </div>
-                      <p 
-                        className={`text-[10px] mt-2 font-mono ${isToday ? 'text-[#FF7417] font-bold' : 'text-[#88847E]'}`}
-                        style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-                      >
+                      <p className={`text-[10px] mt-2 font-mono ${isToday ? 'text-[#FF7417] font-bold' : 'text-[#77736D]'}`}>
                         {day}
                       </p>
                     </div>
@@ -543,88 +526,14 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
               </div>
             </div>
 
-            {/* ── Problem Distribution Bars ── */}
-            <div className="border border-[#303030] bg-[#191919] p-5 sm:p-6 space-y-4">
-              <div 
-                className="border-b border-[#303030] pb-2.5 flex items-center justify-between"
-                style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-              >
-                <h2 
-                  className="text-xs font-bold uppercase tracking-wider text-[#F2EEE6]"
-                  style={{ fontFamily: 'var(--font-space-grotesk), sans-serif' }}
-                >
-                  PROBLEM BREAKDOWN
-                </h2>
-                <span className="text-[10px] text-[#88847E]">
-                  EASY · MEDIUM · HARD
-                </span>
-              </div>
-
-              {/* Easy */}
-              <div>
-                <div 
-                  className="flex justify-between text-xs mb-1"
-                  style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-                >
-                  <span className="text-[#39B96F] font-semibold">EASY</span>
-                  <span className="text-[#88847E]">{stats.easySolved} <span className="text-[#444444]">/ {maxEasy}</span></span>
-                </div>
-                <div className="w-full h-1.5 bg-[#101010] border border-[#303030]">
-                  <div 
-                    className="h-full bg-[#39B96F]"
-                    style={{ width: `${Math.min((stats.easySolved / maxEasy) * 100, 100)}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Medium */}
-              <div>
-                <div 
-                  className="flex justify-between text-xs mb-1"
-                  style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-                >
-                  <span className="text-[#FF7417] font-semibold">MEDIUM</span>
-                  <span className="text-[#88847E]">{stats.mediumSolved} <span className="text-[#444444]">/ {maxMed}</span></span>
-                </div>
-                <div className="w-full h-1.5 bg-[#101010] border border-[#303030]">
-                  <div 
-                    className="h-full bg-[#FF7417]"
-                    style={{ width: `${Math.min((stats.mediumSolved / maxMed) * 100, 100)}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Hard */}
-              <div>
-                <div 
-                  className="flex justify-between text-xs mb-1"
-                  style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-                >
-                  <span className="text-[#E05A5A] font-semibold">HARD</span>
-                  <span className="text-[#88847E]">{stats.hardSolved} <span className="text-[#444444]">/ {maxHard}</span></span>
-                </div>
-                <div className="w-full h-1.5 bg-[#101010] border border-[#303030]">
-                  <div 
-                    className="h-full bg-[#E05A5A]"
-                    style={{ width: `${Math.min((stats.hardSolved / maxHard) * 100, 100)}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-
             {/* ── Recent 8-Day Activity Timeline ── */}
-            <div className="border border-[#303030] bg-[#191919] p-5 sm:p-6">
-              <div 
-                className="flex items-center justify-between mb-4 border-b border-[#303030] pb-2.5 text-xs"
-                style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-              >
-                <h2 
-                  className="font-bold uppercase tracking-wider text-[#F2EEE6] flex items-center gap-1.5"
-                  style={{ fontFamily: 'var(--font-space-grotesk), sans-serif' }}
-                >
-                  <Calendar className="w-3.5 h-3.5" /> RECENT 8-DAY TIMELINE
+            <div className="border border-white/10 bg-[#111111] p-5 sm:p-6">
+              <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3 text-xs font-mono">
+                <h2 className="font-bold uppercase tracking-wider text-[#F1EEE8] flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5 text-[#FF7417]" />
+                  <span>RECENT 8-DAY TIMELINE</span>
                 </h2>
-                <span className="text-[10px] text-[#88847E]">ROLLING WINDOW</span>
+                <span className="text-[10px] text-[#77736D]">ROLLING ACTIVITY WINDOW</span>
               </div>
 
               <div className="grid grid-cols-8 gap-2">
@@ -632,41 +541,37 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                   <div 
                     key={i} 
                     className={`
-                      h-8 flex items-center justify-center border transition-colors
+                      h-9 flex items-center justify-center border font-mono text-xs font-bold transition-colors
                       ${active 
-                        ? 'bg-[#39B96F] text-[#101010] border-[#39B96F]' 
-                        : 'bg-[#101010] text-[#333333] border-[#303030]'}
+                        ? 'bg-[#39BB75] text-[#0B0B0B] border-[#39BB75]' 
+                        : 'bg-[#191919] text-[#444444] border-white/5'}
                       ${i === stats.streak.length - 1 ? 'ring-1 ring-[#FF7417]' : ''}
                     `}
-                    style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
                     title={active ? 'Submissions recorded' : 'No submissions'}
                   >
-                    <span className="text-xs font-bold">{active ? '✓' : '·'}</span>
+                    {active ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : '·'}
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* ── Owner Device Management ── */}
+            {/* ── Owner Workstation Controls ── */}
             {isOwner && (
-              <div className="border border-[#303030] bg-[#141414] p-5 sm:p-6 space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-[#222222] border border-[#303030] text-[#FF7417]">
+              <div className="border border-white/10 bg-[#111111] p-5 sm:p-6 space-y-4">
+                <div className="flex items-start gap-3.5">
+                  <div className="p-2.5 bg-[#191919] border border-white/10 text-[#FF7417]">
                     <Laptop className="w-4 h-4" />
                   </div>
                   <div>
                     <h3 
-                      className="text-sm font-bold uppercase text-[#F2EEE6]"
-                      style={{ fontFamily: 'var(--font-space-grotesk), sans-serif' }}
+                      className="text-base font-black uppercase text-[#F1EEE8] tracking-tight"
+                      style={{ fontFamily: 'var(--font-display), sans-serif' }}
                     >
                       WORKSTATION BINDING CONTROLS
                     </h3>
-                    <p 
-                      className="text-xs text-[#88847E] mt-1"
-                      style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-                    >
-                      This physical machine is bound to <span className="text-[#F2EEE6] font-semibold">@{stats.name}</span>. 
-                      To switch accounts or unbind this device, confirm removal below.
+                    <p className="text-xs font-mono text-[#AAA59D] mt-1 leading-relaxed">
+                      This physical hardware is currently bound to <span className="text-[#F1EEE8] font-bold">@{stats.name}</span>. 
+                      To switch accounts or free this machine, unbind below.
                     </p>
                   </div>
                 </div>
@@ -676,8 +581,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                     type="button"
                     onClick={handleDelete}
                     disabled={deleting}
-                    className="w-full bg-[#101010] text-[#E05A5A] border border-[#E05A5A]/40 hover:bg-[#E05A5A]/10 py-3 text-xs font-black uppercase tracking-wider transition-colors flex items-center justify-center gap-2 disabled:opacity-40"
-                    style={{ fontFamily: 'var(--font-space-grotesk), sans-serif' }}
+                    className="w-full bg-[#191919] text-[#E45B55] border border-[#E45B55]/40 hover:bg-[#E45B55]/15 py-3 text-xs font-mono font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>{deleting ? 'UNLINKING WORKSTATION...' : 'UNLINK LEETCODE ID FROM THIS DEVICE'}</span>
@@ -685,6 +589,17 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                 </div>
               </div>
             )}
+
+            {/* Link back to overall */}
+            <div className="text-center pt-4">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 text-xs font-mono text-[#AAA59D] hover:text-[#FF7417] transition-colors"
+              >
+                <span>VIEW COMPLETE LEAGUE STANDINGS</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
 
           </div>
         )}
